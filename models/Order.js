@@ -5,22 +5,19 @@ const OrderSchema = new mongoose.Schema(
     email: { type: String },
     firstName: { type: String },
     lastName: { type: String },
-    products: [
-      {
-        productId: { type: String },
-        quantity: { type: Number, default: 1 },
-      },
-    ],
+    items: [],
     shippingAddress: {
-      country: { type: String, required: true },
-      city: { type: String, require: true },
-      state: { type: String, required: true },
-      street: { type: String, required: true },
-      zipcode: { type: String, required: true },
+      country: { type: String },
+      city: { type: String },
+      state: { type: String },
+      street: { type: String },
+      zipcode: { type: String },
     },
     total: { type: Number },
-    status: { type: String, default: 'pending' },
+    status: { type: String, default: 'Not Fufilled' },
     storeId: { type: String },
+    paymentId: { type: String, required: true },
+    clientId: { type: String, require: true },
   },
   { timestamps: true }
 );

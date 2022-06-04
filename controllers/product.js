@@ -1,10 +1,24 @@
 const Product = require('../models/Product');
 const uploadToS3 = require('../utils/uploadToS3');
+const Storefront = require('../models/Storefront');
 
-//gets all products
+//gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find({ storeId: req.user.storeId });
+
+    res.status(200).json(products);
+  } catch (err) {
+    res.status(500).json('Server error');
+  }
+};
+
+//gets all storefront products
+const getStoreProducts = async (req, res) => {
+  const storeId = req.params.storeId;
+
+  try {
+    const products = await Product.find({ storeId: storeId });
 
     res.status(200).json(products);
   } catch (err) {
@@ -27,16 +41,21 @@ const getProduct = async (req, res) => {
 //creates a product
 //recieves data {title, desc, price, etc.} and image upload data
 const create = async (req, res) => {
-  const { title, description, price, imagesData } = req.body;
+  const { title, description, price, stock, published, imagesData } = req.body;
 
-  if (!title || !description || !price)
+  if (!title || !description || !price || !stock)
     return res.status(401).json('Not all fields were filled out');
+
+  const storeFront = await Storefront.findById(req.user.storeId);
 
   const newProduct = new Product({
     title: title,
     description: description,
     price: price,
     userId: req.user.id,
+    storeId: req.user.storeId,
+    stock: stock,
+    published: published,
   });
 
   //push images data to newProduct doc
@@ -114,4 +133,12 @@ const imageUpload = async (req, res) => {
   }
 };
 
-module.exports = { getAll, getProduct, create, update, remove, imageUpload };
+module.exports = {
+  getAll,
+  getStoreProducts,
+  getProduct,
+  create,
+  update,
+  remove,
+  imageUpload,
+};

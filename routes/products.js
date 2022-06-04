@@ -11,6 +11,8 @@ const multipleUpload = multer({ storage: storage }).array('productImages');
 //gets all products
 router.get('/', product.getAll);
 
+router.get('/store/:storeId', product.getStoreProducts);
+
 //gets single product
 router.get('/:productId', product.getProduct);
 
