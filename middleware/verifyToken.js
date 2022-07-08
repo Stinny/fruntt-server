@@ -6,8 +6,8 @@ const isTokenValid = (req, res, next) => {
 
   if (!token) return res.status(401).json('Access denied');
 
-  jwt.verify(token, process.env.JWT_SEC, (err) => {
-    if (err) return res.status(401).json('Access denied');
+  jwt.verify(token, process.env.JWT_SEC, (err, user) => {
+    if (err) return res.status(403).send('Access denied');
     next();
   });
 };

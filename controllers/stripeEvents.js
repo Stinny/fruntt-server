@@ -1,7 +1,7 @@
 const stripe = require('stripe')(process.env.SK_TEST);
 const User = require('../models/User');
 
-const accountVerified = async (req, res) => {
+const handleStripeEvents = async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
   let event = req.body;
@@ -18,11 +18,10 @@ const accountVerified = async (req, res) => {
 
   res.send();
 
+  const account = event.data.object;
+
   switch (event.type) {
     case 'account.updated':
-      const account = event.data.object;
-      console.log(account);
-
       try {
         if (account.charges_enabled) {
           const user = await User.findOne({ stripeId: account.id });
@@ -34,10 +33,20 @@ const accountVerified = async (req, res) => {
         break;
       }
       break;
+    case 'account.deleted':
+      try {
+        const user = await UserfindOne({ stripeId: account.id });
+        user.stripeOnboard = false;
+        await user.save();
+      } catch (err) {
+        console.log(err.message);
+        break;
+      }
+      break;
     default:
       console.log(`Unhandled event: ${event.type}`);
       break;
   }
 };
 
-module.exports = { accountVerified };
+module.exports = { handleStripeEvents };

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const StorefrontSchema = new mongoose.Schema(
   {
     userId: { type: String },
-    stripeId: { type: String, default: 'DISABLED' },
+    stripeId: { type: String, default: '' },
     name: { type: String, required: true, unique: true },
     url: { type: String },
   },

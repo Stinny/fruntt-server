@@ -7,9 +7,9 @@ const getAll = async (req, res) => {
   try {
     const products = await Product.find({ storeId: req.user.storeId });
 
-    res.status(200).json(products);
+    return res.json(products);
   } catch (err) {
-    res.status(500).json('Server error');
+    return res.status(500).json('Server error');
   }
 };
 
@@ -19,10 +19,9 @@ const getStoreProducts = async (req, res) => {
 
   try {
     const products = await Product.find({ storeId: storeId });
-
-    res.status(200).json(products);
+    return res.json(products);
   } catch (err) {
-    res.status(500).json('Server error');
+    return res.status(500).json('Server error');
   }
 };
 
@@ -32,7 +31,7 @@ const getProduct = async (req, res) => {
 
   try {
     const product = await Product.findById(productId);
-    return res.status(200).json(product);
+    return res.json(product);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -41,7 +40,7 @@ const getProduct = async (req, res) => {
 //creates a product
 //recieves data {title, desc, price, etc.} and image upload data
 const create = async (req, res) => {
-  const { title, description, price, stock, published, imagesData } = req.body;
+  const { title, description, price, stock, published, imageData } = req.body;
 
   if (!title || !description || !price || !stock)
     return res.status(401).json('Not all fields were filled out');
@@ -59,18 +58,18 @@ const create = async (req, res) => {
   });
 
   //push images data to newProduct doc
-  if (imagesData.length) {
-    for (var i = 0; i < imagesData.length; i++) {
+  if (imageData.length) {
+    for (var i = 0; i < imageData.length; i++) {
       newProduct.images.push({
-        url: imagesData[i].url,
-        key: imagesData[i].key,
+        url: imageData[i].url,
+        key: imageData[i].key,
       });
     }
   }
 
   try {
     const savedProduct = await newProduct.save();
-    return res.status(200).json(savedProduct);
+    return res.json(savedProduct);
   } catch (err) {
     console.error(err);
     return res.status(500).json('Server Error');

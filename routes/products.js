@@ -3,13 +3,14 @@ const product = require('../controllers/product');
 const multer = require('multer');
 const isTokenValid = require('../middleware/verifyToken');
 const isProductOwner = require('../middleware/isProductOwner');
+const setUser = require('../middleware/setUser');
 
 //multer config
 const storage = multer.memoryStorage();
 const multipleUpload = multer({ storage: storage }).array('productImages');
 
 //gets all products
-router.get('/', product.getAll);
+router.get('/', isTokenValid, setUser, product.getAll);
 
 router.get('/store/:storeId', product.getStoreProducts);
 
@@ -17,7 +18,7 @@ router.get('/store/:storeId', product.getStoreProducts);
 router.get('/:productId', product.getProduct);
 
 //creates product
-router.post('/create', isTokenValid, product.create);
+router.post('/create', isTokenValid, setUser, product.create);
 
 //updates product
 router.put('/edit/:productId', isTokenValid, isProductOwner, product.update);

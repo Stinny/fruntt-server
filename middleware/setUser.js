@@ -7,11 +7,12 @@ const setUser = (req, res, next) => {
 
   if (token) {
     jwt.verify(token, process.env.JWT_SEC, (err, user) => {
-      if (err) req.user = null;
-      req.user = user;
+      if (user) {
+        req.user = user;
+        next();
+      }
     });
   }
-  next();
 };
 
-module.exports = { setUser };
+module.exports = setUser;

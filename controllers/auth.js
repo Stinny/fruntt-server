@@ -4,39 +4,33 @@ const User = require('../models/User');
 const Storefront = require('../models/Storefront');
 const stripe = require('stripe')(process.env.SK_TEST);
 const { createSite } = require('../utils/netlifyApi');
+const jwt = require('jsonwebtoken');
 
 const login = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     // const user2 = await User.find({ email: req.body.email });
     // conosle.log(user2);
-    if (!user)
-      return res.json({
-        status: 'error',
-        msg: 'Invalid credentials try again',
-        data: {},
-      });
+    if (!user) return res.status(400).json('Invalid credentials try again');
 
     const validPassword = await bcrypt.compare(
       req.body.password,
       user.password
     );
     if (!validPassword)
-      return res.json({
-        status: 'error',
-        msg: 'Invalid credentials try again',
-        data: {},
-      });
+      return res.status(400).json('Invalid credentials try again');
 
     const storeFront = await Storefront.findOne({ userId: user._id });
 
     const accessToken = user.genAccessToken();
+    const refreshToken = user.genRefreshToken();
+
     const { password, ...otherInfo } = user._doc;
 
-    return res.status(200).json({
-      status: 'Ok',
-      msg: '',
-      data: { accessToken, ...otherInfo, store: storeFront._doc },
+    return res.json({
+      accessToken,
+      refreshToken,
+      userInfo: { ...otherInfo, store: storeFront._doc },
     });
   } catch (err) {
     res.status(500).json('Server error');
@@ -53,10 +47,8 @@ const register = async (req, res) => {
     //checks if email is already in use
     const emailInUse = await User.find({ email: req.body.email });
     if (emailInUse.length)
-      return res.json({
-        status: 'Error',
-        msg: 'Email already in use',
-        data: {},
+      return res.status(400).json({
+        error: 'Email already in use',
       });
 
     //check if store name is already in use
@@ -64,11 +56,20 @@ const register = async (req, res) => {
       name: req.body.storeName,
     });
     if (storeNameInUse.length)
-      return res.json({
-        status: 'Error',
-        msg: 'Storefront name already in use',
-        data: {},
+      return res.status(400).json({
+        error: 'Storefront name already in use',
       });
+
+    const stripeCustomer = await stripe.customers.create({
+      email: req.body.email,
+      name: `${req.body.firstName} ${req.body.lastName}`,
+    });
+
+    const subscription = await stripe.subscriptions.create({
+      customer: stripeCustomer.id,
+      items: [{ price: 'price_1LG7E9Lhd2AdaEiSxzyYaW7m' }],
+      trial_period_days: 14,
+    });
 
     //create the new user mongo doc
     const newUser = new User({
@@ -76,43 +77,35 @@ const register = async (req, res) => {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       password: hash,
-    });
-
-    //creates stripe account
-    const stripeAcc = await stripe.accounts.create({
-      type: 'standard',
-      email: req.body.email,
-      business_type: 'individual',
-      individual: {
-        phone: '000-000-0000',
-      },
+      customerId: stripeCustomer.id,
+      subscriptionId: subscription.id,
+      trial: true,
     });
 
     //create the new storefront mongo doc
     const storeFront = new Storefront({
       userId: newUser._id,
       name: req.body.storeName,
-      stripeId: stripeAcc.id,
     });
 
     newUser.storeId = storeFront._id;
-    newUser.stripeId = stripeAcc.id;
 
     // const deployStore = await createSite(req.body.storeName, storeFront._id);
 
     storeFront.url = 'youtube.com';
 
     const accessToken = newUser.genAccessToken();
+    const refreshToken = newUser.genRefreshToken();
 
     //deconstructs the newUser doc so we don't return the password
     const { password, ...otherInfo } = newUser._doc;
 
     await newUser.save();
     await storeFront.save();
-    res.status(200).json({
-      status: 'Ok',
-      msg: '',
-      data: { accessToken, ...otherInfo, store: storeFront },
+    return res.json({
+      accessToken,
+      refreshToken,
+      userInfo: { ...otherInfo, store: storeFront },
     });
   } catch (err) {
     res.status(500).json(err);
@@ -127,31 +120,87 @@ const updatedUser = async (req, res) => {
 
     const storeFront = await Storefront.findOne({ userId: user._id });
 
-    res.json({
-      status: 'Ok',
-      msg: '',
-      data: { accessToken, ...otherInfo, store: storeFront },
-    });
+    return res.json({ ...otherInfo, store: storeFront });
   } catch (err) {
     return res.status(500).send('Server error');
   }
 };
 
-const updateStripeOnboard = async (req, res) => {
+//issues a new accessToken from valid refreshtoken
+const getNewAccessToken = async (req, res) => {
+  const refreshToken = req.params.refreshTkn;
+
+  jwt.verify(refreshToken, process.env.REFRESH_SEC, async (err, user) => {
+    if (err) return res.status(401).send('Access denied');
+
+    const getUser = await User.findById(user.id);
+    const accessToken = getUser.genAccessToken();
+
+    console.log('new token issued');
+
+    return res.json(accessToken);
+  });
+};
+
+//creates onboard url for linking stripe account to storefronts
+const getOnboardUrl = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const stripeAcc = await stripe.accounts.retrieve(req.user.stripeId);
+    const storefront = await Storefront.findById(req.user.storeId);
 
-    if (stripeAcc.details_submitted) {
-      user.stripeOnboard = true;
-      await user.save();
+    if (!user.stripeId) {
+      //creates stripe account
+      const stripeAcc = await stripe.accounts.create({
+        type: 'standard',
+        business_type: 'individual',
+        individual: {
+          phone: '000-000-0000',
+        },
+      });
+      user.stripeId = stripeAcc.id;
+      storefront.stripeId = stripeAcc.id;
     }
 
-    const { password, ...otherInfo } = user._doc;
-    return res.status(200).json(...otherInfo);
+    const savedUser = await user.save();
+    await storefront.save();
+
+    // const stripeAcc = await stripe.accounts.retrieve(req.user.stripeId);
+    const onboardUrl = await stripe.accountLinks.create({
+      account: savedUser.stripeId,
+      refresh_url: 'http://localhost:3000/settings',
+      return_url: 'http://localhost:3000/settings',
+      type: 'account_onboarding',
+    });
+
+    return res.json(onboardUrl);
   } catch (err) {
-    return res.status(500).json('Server error');
+    return res.status(500).json(err);
   }
 };
 
-module.exports = { login, register, updatedUser, updateStripeOnboard };
+const disconnectStripe = async (req, res) => {
+  console.log(req.user);
+  try {
+    const user = await User.findById(req.user.id);
+    const storefront = await Storefront.findById(req.user.storeId);
+
+    user.stripeOnboard = false;
+    user.stripeId = '';
+    storefront.stripeId = '';
+
+    await user.save();
+    await storefront.save();
+    res.json('Stripe disconnected');
+  } catch (err) {
+    res.status(500).json('Server error');
+  }
+};
+
+module.exports = {
+  login,
+  register,
+  updatedUser,
+  getNewAccessToken,
+  getOnboardUrl,
+  disconnectStripe,
+};

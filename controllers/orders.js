@@ -1,22 +1,8 @@
 const Order = require('../models/Order');
+const Storefront = require('../models/Storefront');
+const Customer = require('../models/Customer');
+const User = require('../models/User');
 const stripe = require('stripe')(process.env.SK_TEST);
-
-//creates onboard url for linking stripe account to storefronts
-const getOboardUrl = async (req, res) => {
-  try {
-    const stripeAcc = await stripe.accounts.retrieve(req.user.stripeId);
-    const onboardUrl = await stripe.accountLinks.create({
-      account: req.user.stripeId,
-      refresh_url: 'http://localhost:3000/settings',
-      return_url: 'http://localhost:3000/settings',
-      type: 'account_onboarding',
-    });
-
-    return res.status(200).json(onboardUrl);
-  } catch (err) {
-    return res.status(500).json(err);
-  }
-};
 
 //gets a single order
 const getOrder = async (req, res) => {
@@ -25,7 +11,7 @@ const getOrder = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
-    return res.status(200).json(order);
+    return res.json(order);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -36,7 +22,7 @@ const getStoreOrders = async (req, res) => {
   const storeId = req.params.storeId;
 
   try {
-    const orders = await Order.find({ storeId: storeId });
+    const orders = await Order.find({ storeId: req.user.storeId });
     return res.status(200).json(orders);
   } catch (err) {
     return res.status(500).json('Server error');
@@ -46,57 +32,34 @@ const getStoreOrders = async (req, res) => {
 //creates order
 const create = async (req, res) => {
   try {
-    const { amount, storeId, orderItems } = req.body;
+    const { amount, storeId } = req.body;
     // const storeId = req.params.storeId;
 
+    const storeFront = await Storefront.findById(storeId);
+    const storeFrontOwner = await User.findById(storeFront.userId);
+
     //need to get the stores stripe account ID and add to paymentIntent
-    const paymentIntent = await stripe.paymentIntents.create(
-      {
-        amount: amount * 100,
-        currency: 'usd',
-        payment_method_types: ['card'],
-      }
-      // { stripeAccount: 'jsjfhjhf' }
-    );
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100,
+      currency: 'usd',
+      payment_method_types: ['card'],
+      on_behalf_of: storeFrontOwner.stripeId,
+      transfer_data: {
+        destination: storeFrontOwner.stripeId,
+      },
+    });
 
     const newOrder = new Order({
       paymentId: paymentIntent.id,
       clientId: paymentIntent.client_secret,
       storeId: storeId,
-      //need to add on storeId
     });
-
-    //adds all items from the cart to the order
-    // if (orderItems.length) {
-    //   for (var i = 0; i < orderItems.length; i++) {
-    //     newOrder.products.push(orderItems[i]);
-    //   }
-    // }
 
     await newOrder.save();
 
-    res.json(newOrder._id);
+    res.json({ orderId: newOrder._id });
   } catch (err) {
     res.status(500).json(err.message);
-  }
-};
-
-const updateOrderPaymentIntent = async (req, res) => {
-  const orderId = req.params.orderId;
-  const { amount } = req.body;
-
-  try {
-    const order = await Order.findById(orderId);
-
-    const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
-      amount: amount * 100,
-    });
-
-    console.log('order payment updated');
-    return res.json({ status: 'Ok', msg: '', data: order });
-  } catch (err) {
-    console.log(err.message);
-    return res.status(500).json('Server error');
   }
 };
 
@@ -112,7 +75,10 @@ const update = async (req, res) => {
     state,
     zip,
     total,
+    orderItems,
   } = req.body;
+
+  console.log(orderItems);
 
   try {
     const orderToUpdate = await Order.findById(orderId);
@@ -126,9 +92,36 @@ const update = async (req, res) => {
     orderToUpdate.shippingAddress.zipcode = zip;
     orderToUpdate.shippingAddress.street = address;
     orderToUpdate.total = total;
+    orderToUpdate.paid = true;
 
+    for (var i = 0; i < orderItems.length; i++) {
+      orderToUpdate.items.push(orderItems[i]);
+    }
+
+    //update paymentIntent attached to order
+    const paymentIntent = await stripe.paymentIntents.update(
+      orderToUpdate.paymentId,
+      {
+        amount: total * 100,
+      }
+    );
+
+    const newCustomer = new Customer({
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      address: {
+        street: address,
+        city: city,
+        state: state,
+        zipcode: zip,
+      },
+      storeId: orderToUpdate.storeId,
+    });
+
+    await newCustomer.save();
     const savedOrder = await orderToUpdate.save();
-    return res.json({ status: 'Ok', msg: '', data: savedOrder });
+    return res.json(savedOrder);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -137,8 +130,6 @@ const update = async (req, res) => {
 module.exports = {
   getOrder,
   getStoreOrders,
-  getOboardUrl,
   create,
-  updateOrderPaymentIntent,
   update,
 };
