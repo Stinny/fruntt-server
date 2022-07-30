@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const S3 = require('aws-sdk/clients/s3');
 
-//function for creating UUIDs goes here
+//function to create UUID to add to image key/name for uniqeness
 const genUUID = () => {
   var d = new Date().getTime();
   var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
@@ -21,7 +21,7 @@ const s3 = new S3({
   Bucket: process.env.AWS_BUCK_NAME,
 });
 
-const upoloadToS3 = (file) => {
+const uploadToS3 = (file) => {
   const key = genUUID() + file.originalname;
 
   const params = {
@@ -35,4 +35,13 @@ const upoloadToS3 = (file) => {
   return s3.upload(params).promise();
 };
 
-module.exports = upoloadToS3;
+const deleteObjFromS3 = (key) => {
+  const params = {
+    Bucket: process.env.AWS_BUCK_NAME,
+    Key: key,
+  };
+
+  return s3.deleteObject(params).promise();
+};
+
+module.exports = { uploadToS3, deleteObjFromS3 };

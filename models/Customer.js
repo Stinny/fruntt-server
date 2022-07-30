@@ -11,7 +11,6 @@ const customerSchema = new mongoose.Schema({
     street: { type: String },
     zipcode: { type: String },
   },
-  source: { type: String, default: 'Order' },
   storeId: { type: String },
 });
 

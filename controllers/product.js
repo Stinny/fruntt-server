@@ -1,25 +1,26 @@
 const Product = require('../models/Product');
-const uploadToS3 = require('../utils/uploadToS3');
+const { uploadToS3, deleteObjFromS3 } = require('../utils/uploadToS3');
 const Storefront = require('../models/Storefront');
 
 //gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
   try {
-    const products = await Product.find({ storeId: req.user.storeId });
+    const item = await Product.find({ storeId: req.user.storeId });
 
-    return res.json(products);
+    return res.json(item);
   } catch (err) {
     return res.status(500).json('Server error');
   }
 };
 
-//gets all storefront products
+//gets a single item for a storefront
 const getStoreProducts = async (req, res) => {
   const storeId = req.params.storeId;
 
   try {
-    const products = await Product.find({ storeId: storeId });
-    return res.json(products);
+    const product = await Product.find({ storeId: storeId }); //returns an array
+    const item = product[0]; //first item in the returned array from line above
+    return res.json(item);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -40,7 +41,22 @@ const getProduct = async (req, res) => {
 //creates a product
 //recieves data {title, desc, price, etc.} and image upload data
 const create = async (req, res) => {
-  const { title, description, price, stock, published, imageData } = req.body;
+  const {
+    title,
+    description,
+    price,
+    stock,
+    published,
+    weightUnit,
+    sizeUnit,
+    weight,
+    width,
+    length,
+    height,
+    imageData,
+  } = req.body;
+
+  console.log(req.body);
 
   if (!title || !description || !price || !stock)
     return res.status(401).json('Not all fields were filled out');
@@ -54,6 +70,12 @@ const create = async (req, res) => {
     userId: req.user.id,
     storeId: req.user.storeId,
     stock: stock,
+    weightUnit: weightUnit,
+    sizeUnit: sizeUnit,
+    weight: weight,
+    width: width,
+    length: length,
+    height: height,
     published: published,
   });
 
@@ -79,22 +101,56 @@ const create = async (req, res) => {
 //updates single product
 const update = async (req, res) => {
   const productId = req.params.productId;
-  const { title, description, price } = req.body;
+  const {
+    title,
+    description,
+    price,
+    stock,
+    published,
+    weightUnit,
+    sizeUnit,
+    weight,
+    height,
+    width,
+    length,
+    imageData,
+  } = req.body;
+
+  console.log(req.body);
+
+  //   console.log(imageData);
 
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      {
-        title: title,
-        description: description,
-        price: price,
-      },
-      { new: true } //thi is so it returns the updated product doc
-    );
+    const productToUpdate = await Product.findById(productId);
 
-    res.status(200).json(updatedProduct);
+    //make updates
+    productToUpdate.title = title;
+    productToUpdate.description = description;
+    productToUpdate.price = price;
+    productToUpdate.stock = stock;
+    productToUpdate.published = published;
+    productToUpdate.weightUnit = weightUnit;
+    productToUpdate.sizeUnit = sizeUnit;
+    productToUpdate.weight = weight;
+    productToUpdate.height = height;
+    productToUpdate.length = length;
+    productToUpdate.width = width;
+
+    //push image data to doc
+    if (imageData.length) {
+      for (var i = 0; i < imageData.length; i++) {
+        productToUpdate.images.push({
+          url: imageData[i].url,
+          key: imageData[i].key,
+        });
+      }
+    }
+
+    //save the updates to the product doc
+    await productToUpdate.save();
+
+    res.status(200).json('Item updated');
   } catch (err) {
-    console.log(err);
     res.status(500).json('Server Error');
   }
 };
@@ -106,9 +162,20 @@ const remove = async (req, res) => {
   try {
     await Product.findByIdAndDelete(productId);
 
-    res.status(200).json(productId);
+    res.status(200).json('Item deleted');
   } catch (err) {
     res.status(500).json('Server error');
+  }
+};
+
+//gets an item from the DB and returns just the image data(url, key, _id)
+const getItemImages = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+    const images = product.images;
+    return res.json(images);
+  } catch (err) {
+    return res.status(500).json('Server error');
   }
 };
 
@@ -132,6 +199,23 @@ const imageUpload = async (req, res) => {
   }
 };
 
+//deletes image from the Product doc and from our S3 bucket
+const imageDelete = async (req, res) => {
+  const { productId, imgId, key } = req.body;
+
+  try {
+    const product = await Product.findById(productId); //get product to access images
+
+    await product.images.pull({ _id: imgId }); //delete the image by the id
+    await product.save();
+
+    const deletedImgReq = await deleteObjFromS3(key); //delete obj from S3 bucket by the key
+    return res.json('Image deleted');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getAll,
   getStoreProducts,
@@ -140,4 +224,6 @@ module.exports = {
   update,
   remove,
   imageUpload,
+  imageDelete,
+  getItemImages,
 };

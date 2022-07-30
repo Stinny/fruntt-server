@@ -21,11 +21,21 @@ router.get('/:productId', product.getProduct);
 router.post('/create', isTokenValid, setUser, product.create);
 
 //updates product
-router.put('/edit/:productId', isTokenValid, isProductOwner, product.update);
+router.post(
+  '/edit/:productId',
+  isTokenValid,
+  setUser,
+  isProductOwner,
+  product.update
+);
 
 //deletes product
 router.delete('/delete/:productId', isTokenValid, product.remove);
 
 router.post('/imageupload', multipleUpload, product.imageUpload);
+
+router.post('/image/delete/', product.imageDelete);
+
+router.get('/images/:productId', product.getItemImages);
 
 module.exports = router;

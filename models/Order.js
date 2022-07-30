@@ -5,7 +5,8 @@ const OrderSchema = new mongoose.Schema(
     email: { type: String },
     firstName: { type: String },
     lastName: { type: String },
-    items: [],
+    item: {},
+    qty: { type: Number },
     shippingAddress: {
       country: { type: String },
       city: { type: String },
@@ -19,6 +20,7 @@ const OrderSchema = new mongoose.Schema(
     storeId: { type: String },
     paymentId: { type: String, required: true },
     clientId: { type: String, require: true },
+    labelUrl: { type: String },
   },
   { timestamps: true }
 );

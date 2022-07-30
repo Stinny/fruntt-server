@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Storefront = require('../models/Storefront');
 const Customer = require('../models/Customer');
 const User = require('../models/User');
+const { genShippingLabel } = require('../utils/genShippingLabel');
 const stripe = require('stripe')(process.env.SK_TEST);
 
 //gets a single order
@@ -32,7 +33,7 @@ const getStoreOrders = async (req, res) => {
 //creates order
 const create = async (req, res) => {
   try {
-    const { amount, storeId } = req.body;
+    const { total, storeId, item, qty } = req.body;
     // const storeId = req.params.storeId;
 
     const storeFront = await Storefront.findById(storeId);
@@ -40,9 +41,9 @@ const create = async (req, res) => {
 
     //need to get the stores stripe account ID and add to paymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100,
+      amount: total * 100,
       currency: 'usd',
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
       on_behalf_of: storeFrontOwner.stripeId,
       transfer_data: {
         destination: storeFrontOwner.stripeId,
@@ -53,6 +54,8 @@ const create = async (req, res) => {
       paymentId: paymentIntent.id,
       clientId: paymentIntent.client_secret,
       storeId: storeId,
+      item: item,
+      qty: qty,
     });
 
     await newOrder.save();
@@ -75,14 +78,11 @@ const update = async (req, res) => {
     state,
     zip,
     total,
-    orderItems,
+    qty,
   } = req.body;
-
-  console.log(orderItems);
 
   try {
     const orderToUpdate = await Order.findById(orderId);
-
     orderToUpdate.firstName = firstName;
     orderToUpdate.lastName = lastName;
     orderToUpdate.email = email;
@@ -91,12 +91,26 @@ const update = async (req, res) => {
     orderToUpdate.shippingAddress.state = state;
     orderToUpdate.shippingAddress.zipcode = zip;
     orderToUpdate.shippingAddress.street = address;
+
+    orderToUpdate.qty = qty;
     orderToUpdate.total = total;
     orderToUpdate.paid = true;
 
-    for (var i = 0; i < orderItems.length; i++) {
-      orderToUpdate.items.push(orderItems[i]);
-    }
+    //generate the shipping label
+    const labelUrl = await genShippingLabel({
+      firstName: firstName,
+      lastName: lastName,
+      address: address,
+      city: city,
+      state: state,
+      zip: zip,
+      weight: orderToUpdate.item.weight,
+      height: orderToUpdate.item.height,
+      width: orderToUpdate.item.width,
+      length: orderToUpdate.item.length,
+    });
+
+    orderToUpdate.labelUrl = labelUrl;
 
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(
@@ -125,6 +139,13 @@ const update = async (req, res) => {
   } catch (err) {
     return res.status(500).json('Server error');
   }
+};
+
+const markOrderAsFulfilled = async () => {
+  //here we will retrieve the order from db based on ID
+  //mark it as fulfilled
+  //and send the customer a shipping confirmation email with
+  //tracking number
 };
 
 module.exports = {
