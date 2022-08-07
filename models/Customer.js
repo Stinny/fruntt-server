@@ -12,6 +12,7 @@ const customerSchema = new mongoose.Schema({
     zipcode: { type: String },
   },
   storeId: { type: String },
+  orderId: { type: String },
 });
 
 const Customer = mongoose.model('Customer', customerSchema);

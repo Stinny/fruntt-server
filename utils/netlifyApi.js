@@ -21,13 +21,13 @@ const createSite = async (storeName, storeId) => {
   const deployKey = await getDeployKey();
 
   const body = {
-    custom_domain: `${storeName}.kretey.com`,
+    custom_domain: `${storeName}.fruntt.com`,
     repo: {
-      id: '465884990', //github repo ID(need to be dynamic)
+      id: '519604948', //github repo ID(need to be dynamic)
       installation_id: '24719337', //insallation ID of netlify on github(found in URL)
       provider: 'github',
-      repo_path: 'Stinny/kretey-storefront',
-      repo_url: 'github.com/Stinny/kretey-storefront',
+      repo_path: 'Stinny/fruntt-storefront',
+      repo_url: 'github.com/Stinny/fruntt-storefront',
       private: true,
       branch: 'master',
       cmd: 'CI= npm run build',
@@ -35,7 +35,7 @@ const createSite = async (storeName, storeId) => {
       dir: 'build',
       deploy_key_id: deployKey.id,
       env: {
-        STORE_ID: storeId,
+        REACT_APP_STORE_ID: storeId,
       },
     },
   };

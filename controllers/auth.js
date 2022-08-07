@@ -90,9 +90,9 @@ const register = async (req, res) => {
 
     newUser.storeId = storeFront._id;
 
-    // const deployStore = await createSite(req.body.storeName, storeFront._id);
+    const deployStore = await createSite(req.body.storeName, storeFront._id);
 
-    storeFront.url = 'youtube.com';
+    storeFront.url = deployStore.url;
 
     const accessToken = newUser.genAccessToken();
     const refreshToken = newUser.genRefreshToken();

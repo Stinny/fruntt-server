@@ -56,8 +56,6 @@ const create = async (req, res) => {
     imageData,
   } = req.body;
 
-  console.log(req.body);
-
   if (!title || !description || !price || !stock)
     return res.status(401).json('Not all fields were filled out');
 

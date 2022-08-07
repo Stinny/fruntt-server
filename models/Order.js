@@ -21,6 +21,8 @@ const OrderSchema = new mongoose.Schema(
     paymentId: { type: String, required: true },
     clientId: { type: String, require: true },
     labelUrl: { type: String },
+    placedOn: { type: Date },
+    fulfilledOn: { type: Date },
   },
   { timestamps: true }
 );

@@ -91,9 +91,9 @@ const update = async (req, res) => {
     orderToUpdate.shippingAddress.state = state;
     orderToUpdate.shippingAddress.zipcode = zip;
     orderToUpdate.shippingAddress.street = address;
-
     orderToUpdate.qty = qty;
     orderToUpdate.total = total;
+    orderToUpdate.placedOn = new Date();
     orderToUpdate.paid = true;
 
     //generate the shipping label
@@ -131,6 +131,7 @@ const update = async (req, res) => {
         zipcode: zip,
       },
       storeId: orderToUpdate.storeId,
+      orderId: orderToUpdate._id,
     });
 
     await newCustomer.save();
@@ -141,11 +142,35 @@ const update = async (req, res) => {
   }
 };
 
-const markOrderAsFulfilled = async () => {
+const markOrderAsFulfilled = async (req, res) => {
   //here we will retrieve the order from db based on ID
   //mark it as fulfilled
   //and send the customer a shipping confirmation email with
   //tracking number
+  const orderId = req.params.orderId;
+
+  try {
+    const order = await Order.findById(orderId);
+    order.fulfiledOn = new Date();
+    order.fulfilled = true;
+
+    //send a 'shipping confirmed' email to the customer of this order
+    //email should also have the tracking ID OR the url
+
+    await order.save();
+
+    return res.json('Order fulfilled');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const requestReview = async (req, res) => {
+  //here we will get a customer with an orderId
+  //we want to send an email requesting a review of the item
+  //within the order
+  //we also want to create a review doc
+  //containing the customerId, orderId, and review content(text, rating)
 };
 
 module.exports = {
@@ -153,4 +178,5 @@ module.exports = {
   getStoreOrders,
   create,
   update,
+  markOrderAsFulfilled,
 };

@@ -15,4 +15,6 @@ router.put('/update/:orderId', orders.update);
 //gets single order
 router.get('/:orderId', orders.getOrder);
 
+router.post('/fulfill/:orderId', orders.markOrderAsFulfilled);
+
 module.exports = router;
