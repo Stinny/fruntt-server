@@ -4,8 +4,8 @@ const jwt = require('jsonwebtoken');
 const UserSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true },
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    firstName: { type: String },
+    lastName: { type: String },
     password: { type: String, required: true },
     storeId: { type: String },
     stripeId: { type: String, default: '' },
@@ -14,6 +14,19 @@ const UserSchema = new mongoose.Schema(
     stripeOnboard: { type: Boolean, default: false },
     subscribed: { type: Boolean, default: false },
     trial: { type: Boolean, default: false },
+    sendUpdates: { type: Boolean, default: true },
+    sendOrderPlaced: { type: Boolean, default: true },
+    sendItemOutOfStock: { type: Boolean, default: true },
+    sendReviewCollected: { type: Boolean, default: true },
+    emailConfirmed: { type: Boolean, default: false },
+    business: {
+      name: { type: String },
+      address: { type: String },
+      country: { type: String },
+      state: { type: String },
+      city: { type: String },
+      zipCode: { type: String },
+    },
   },
   { timestamps: true }
 );

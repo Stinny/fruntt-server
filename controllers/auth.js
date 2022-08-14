@@ -5,6 +5,7 @@ const Storefront = require('../models/Storefront');
 const stripe = require('stripe')(process.env.SK_TEST);
 const { createSite } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
+const sendSignupEmail = require('../email/sendSignupEmail');
 
 const login = async (req, res) => {
   try {
@@ -62,7 +63,6 @@ const register = async (req, res) => {
 
     const stripeCustomer = await stripe.customers.create({
       email: req.body.email,
-      name: `${req.body.firstName} ${req.body.lastName}`,
     });
 
     const subscription = await stripe.subscriptions.create({
@@ -74,8 +74,8 @@ const register = async (req, res) => {
     //create the new user mongo doc
     const newUser = new User({
       email: req.body.email,
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
+      firstName: 'FIRST NAME',
+      lastName: 'LAST NAME',
       password: hash,
       customerId: stripeCustomer.id,
       subscriptionId: subscription.id,
@@ -97,6 +97,8 @@ const register = async (req, res) => {
     const accessToken = newUser.genAccessToken();
     const refreshToken = newUser.genRefreshToken();
 
+    // sendSignupEmail(req.body.email, newUser._id);
+
     //deconstructs the newUser doc so we don't return the password
     const { password, ...otherInfo } = newUser._doc;
 
@@ -115,7 +117,6 @@ const register = async (req, res) => {
 const updatedUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const accessToken = user.genAccessToken();
     const { password, ...otherInfo } = user._doc;
 
     const storeFront = await Storefront.findOne({ userId: user._id });
@@ -179,7 +180,6 @@ const getOnboardUrl = async (req, res) => {
 };
 
 const disconnectStripe = async (req, res) => {
-  console.log(req.user);
   try {
     const user = await User.findById(req.user.id);
     const storefront = await Storefront.findById(req.user.storeId);
@@ -196,6 +196,77 @@ const disconnectStripe = async (req, res) => {
   }
 };
 
+const updateAccountInfo = async (req, res) => {
+  try {
+    const { firstName, lastName, email } = req.body;
+
+    const userToUpdate = await User.findById(req.user.id);
+    userToUpdate.firstName = firstName;
+    userToUpdate.lastName = lastName;
+    userToUpdate.email = email;
+
+    await userToUpdate.save();
+    return res.json('User updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const updateBusinessInfo = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { name, address, country, state, city, zip } = req.body;
+
+    const userToUpdate = await User.findById(req.user.id);
+    userToUpdate.business.name = name;
+    userToUpdate.business.address = address;
+    userToUpdate.business.country = country;
+    userToUpdate.business.state = state;
+    userToUpdate.business.city = city;
+    userToUpdate.business.zipCode = zip;
+
+    await userToUpdate.save();
+    return res.json('User updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const updateNotifications = async (req, res) => {
+  try {
+    const {
+      sendUpdates,
+      sendItemOutOfStock,
+      sendOrderPlaced,
+      sendReviewCollected,
+    } = req.body;
+
+    const userToUpdate = await User.findById(req.user.id);
+    userToUpdate.sendUpdates = sendUpdates;
+    userToUpdate.sendItemOutOfStock = sendItemOutOfStock;
+    userToUpdate.sendOrderPlaced = sendOrderPlaced;
+    userToUpdate.sendReviewCollected = sendReviewCollected;
+
+    await userToUpdate.save();
+    return res.json('User updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const confirmEmail = async (req, res) => {
+  try {
+    const userToUpdate = await User.findById(req.user.id);
+
+    userToUpdate.emailConfirmed = true;
+
+    await userToUpdate.save();
+    return res.json('User updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -203,4 +274,8 @@ module.exports = {
   getNewAccessToken,
   getOnboardUrl,
   disconnectStripe,
+  updateAccountInfo,
+  updateBusinessInfo,
+  updateNotifications,
+  confirmEmail,
 };

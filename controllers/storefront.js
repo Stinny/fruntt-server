@@ -16,12 +16,13 @@ const editStyles = async (req, res) => {
   const {
     navbarBG,
     pageBG,
-    itemDetailsBG,
-    itemText,
+    pageText,
     buttonBG,
     buttonTextColor,
     footerBG,
   } = req.body;
+
+  console.log(req.body);
 
   try {
     const storefrontToEdit = await Storefront.findById(storeId);
@@ -29,8 +30,7 @@ const editStyles = async (req, res) => {
     storefrontToEdit.style.pageBackground = pageBG;
     storefrontToEdit.style.navbarBackground = navbarBG;
     storefrontToEdit.style.footerBackground = footerBG;
-    storefrontToEdit.style.itemDetailsBackground = itemDetailsBG;
-    storefrontToEdit.style.itemText = itemText;
+    storefrontToEdit.style.pageText = pageText;
     storefrontToEdit.style.buttonBackground = buttonBG;
     storefrontToEdit.style.buttonTextColor = buttonTextColor;
 

@@ -21,6 +21,7 @@
     "mongoose": "^6.2.1",
     "multer": "^1.4.4",
     "nodemon": "^2.0.15",
+    "postmark": "^3.0.12",
     "shipengine": "^1.0.1",
     "stripe": "^8.213.0"
   }

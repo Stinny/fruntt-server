@@ -9,5 +9,24 @@ router.get('/updateduser', isTokenValid, setUser, auth.updatedUser);
 router.get('/refresh/:refreshTkn', auth.getNewAccessToken);
 router.get('/onboard', isTokenValid, setUser, auth.getOnboardUrl);
 router.post('/disconnectstripe', isTokenValid, setUser, auth.disconnectStripe);
+router.post(
+  '/updateaccountinfo',
+  isTokenValid,
+  setUser,
+  auth.updateAccountInfo
+);
+router.post(
+  '/updatebusinessinfo',
+  isTokenValid,
+  setUser,
+  auth.updateBusinessInfo
+);
+router.post(
+  '/updatenotifications',
+  isTokenValid,
+  setUser,
+  auth.updateNotifications
+);
+router.post('/confirmemail', isTokenValid, setUser, auth.confirmEmail);
 
 module.exports = router;
