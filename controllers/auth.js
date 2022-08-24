@@ -74,8 +74,8 @@ const register = async (req, res) => {
     //create the new user mongo doc
     const newUser = new User({
       email: req.body.email,
-      firstName: 'FIRST NAME',
-      lastName: 'LAST NAME',
+      firstName: '',
+      lastName: '',
       password: hash,
       customerId: stripeCustomer.id,
       subscriptionId: subscription.id,
@@ -214,7 +214,6 @@ const updateAccountInfo = async (req, res) => {
 
 const updateBusinessInfo = async (req, res) => {
   try {
-    console.log(req.body);
     const { name, address, country, state, city, zip } = req.body;
 
     const userToUpdate = await User.findById(req.user.id);
