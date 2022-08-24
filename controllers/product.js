@@ -114,8 +114,6 @@ const update = async (req, res) => {
     imageData,
   } = req.body;
 
-  console.log(req.body);
-
   //   console.log(imageData);
 
   try {
