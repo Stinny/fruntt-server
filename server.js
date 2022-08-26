@@ -6,7 +6,7 @@ const connectToDB = require('./config/db');
 
 server.use(express.json());
 server.use(cookieParser());
-server.use(cors({ origin: true }));
+server.use(cors());
 
 connectToDB();
 
