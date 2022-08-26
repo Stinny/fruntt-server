@@ -1,6 +1,7 @@
 const Storefront = require('../models/Storefront');
 const User = require('../models/User');
 const { deleteObjFromS3 } = require('../utils/uploadToS3');
+const Order = require('../models/Order');
 
 const getStorefront = async (req, res) => {
   try {
@@ -130,6 +131,33 @@ const addVisit = async (req, res) => {
   }
 };
 
+const getStoreStats = async (req, res) => {
+  let revenue = 0;
+  let numOfOrders = 0;
+
+  try {
+    const orders = await Order.find({
+      storeId: req.params.storeId,
+      paid: true,
+    });
+    const storefront = await Storefront.findById(req.params.storeId);
+
+    for (var x = 0; x < orders.length; x++) {
+      revenue += orders[x].total;
+      numOfOrders += 1;
+    }
+
+    return res.json({
+      revenue: revenue,
+      numOfOrders: numOfOrders,
+      visits: storefront.visits,
+      conversion: (numOfOrders / storefront.visits) * 100,
+    });
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getStorefront,
   getStorefrontById,
@@ -138,4 +166,5 @@ module.exports = {
   deleteLogo,
   addSocialLinks,
   addVisit,
+  getStoreStats,
 };
