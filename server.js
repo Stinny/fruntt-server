@@ -7,13 +7,11 @@ const connectToDB = require('./config/db');
 server.use(express.json());
 server.use(cookieParser());
 
-//cors
-const corsOptions = {
-  origin: 'https://fruntt.com',
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
-server.use(cors(corsOptions));
+server.use(
+  cors({
+    origin: 'https://fruntt.com',
+  })
+);
 
 connectToDB();
 
@@ -34,15 +32,6 @@ server.use('/api/storefront', storefrontRoutes);
 server.use('/api/subscriptions', subscriptionRoutes);
 server.use('/api/feedback', feedbackRoutes);
 server.use('/api/stripe/', stripeRoutes);
-
-server.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', 'https://fruntt.com');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept'
-  );
-  next();
-});
 
 server.get('/', (req, res) => {
   res.send('home');
