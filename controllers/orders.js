@@ -23,7 +23,10 @@ const getStoreOrders = async (req, res) => {
   const storeId = req.params.storeId;
 
   try {
-    const orders = await Order.find({ storeId: req.user.storeId });
+    const orders = await Order.find({
+      storeId: req.user.storeId,
+      paid: true,
+    });
     return res.status(200).json(orders);
   } catch (err) {
     return res.status(500).json('Server error');

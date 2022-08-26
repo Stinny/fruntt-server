@@ -11,6 +11,17 @@ const getStorefront = async (req, res) => {
   }
 };
 
+const getStorefrontById = async (req, res) => {
+  const storeId = req.params.storeId;
+
+  try {
+    const storefront = await Storefront.findById(storeId);
+    return res.json(storefront);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 const addLogo = async (req, res) => {
   const storeId = req.params.storeId;
 
@@ -104,6 +115,7 @@ const editStyles = async (req, res) => {
 
 module.exports = {
   getStorefront,
+  getStorefrontById,
   editStyles,
   addLogo,
   deleteLogo,

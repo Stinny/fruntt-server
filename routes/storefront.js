@@ -5,6 +5,8 @@ const isTokenValid = require('../middleware/verifyToken');
 
 router.get('/', isTokenValid, setUser, storefront.getStorefront);
 
+router.get('/get/:storeId', storefront.getStorefrontById);
+
 router.post('/edit/:storeId', isTokenValid, setUser, storefront.editStyles);
 
 router.post('/addlogo/:storeId', isTokenValid, setUser, storefront.addLogo);

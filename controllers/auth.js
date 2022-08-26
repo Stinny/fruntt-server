@@ -97,7 +97,7 @@ const register = async (req, res) => {
     const accessToken = newUser.genAccessToken();
     const refreshToken = newUser.genRefreshToken();
 
-    // sendSignupEmail(req.body.email, newUser._id);
+    sendSignupEmail(req.body.email, newUser._id);
 
     //deconstructs the newUser doc so we don't return the password
     const { password, ...otherInfo } = newUser._doc;
