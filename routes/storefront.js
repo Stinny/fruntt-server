@@ -14,4 +14,7 @@ router.post('/addlogo/:storeId', isTokenValid, setUser, storefront.addLogo);
 router.post('/deletelogo', isTokenValid, setUser, storefront.deleteLogo);
 
 router.post('/addsocials', isTokenValid, setUser, storefront.addSocialLinks);
+
+router.post('/addvisit', storefront.addVisit);
+
 module.exports = router;

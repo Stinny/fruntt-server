@@ -113,6 +113,23 @@ const editStyles = async (req, res) => {
   }
 };
 
+//adds one to the visit count for tracking visits
+const addVisit = async (req, res) => {
+  const { storeId } = req.body;
+
+  try {
+    const storefront = await Storefront.findById(storeId);
+
+    storefront.visits += 1;
+
+    await storefront.save();
+
+    return res.json('Visit tracked');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getStorefront,
   getStorefrontById,
@@ -120,4 +137,5 @@ module.exports = {
   addLogo,
   deleteLogo,
   addSocialLinks,
+  addVisit,
 };
