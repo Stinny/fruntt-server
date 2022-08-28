@@ -3,6 +3,7 @@ const Storefront = require('../models/Storefront');
 const Customer = require('../models/Customer');
 const User = require('../models/User');
 const { genShippingLabel } = require('../utils/genShippingLabel');
+const Product = require('../models/Product');
 const stripe = require('stripe')(process.env.SK_TEST);
 
 //gets a single order
@@ -86,6 +87,8 @@ const update = async (req, res) => {
 
   try {
     const orderToUpdate = await Order.findById(orderId);
+    const updateItemStock = await Product.findById(orderToUpdate.item._id);
+
     orderToUpdate.firstName = firstName;
     orderToUpdate.lastName = lastName;
     orderToUpdate.email = email;
@@ -98,6 +101,8 @@ const update = async (req, res) => {
     orderToUpdate.total = total;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.paid = true;
+
+    updateItemStock.stock -= 1;
 
     //generate the shipping label
     const labelUrl = await genShippingLabel({
@@ -138,6 +143,7 @@ const update = async (req, res) => {
     });
 
     await newCustomer.save();
+    await updateItemStock.save();
     const savedOrder = await orderToUpdate.save();
     return res.json(savedOrder);
   } catch (err) {

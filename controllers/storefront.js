@@ -134,6 +134,7 @@ const addVisit = async (req, res) => {
 const getStoreStats = async (req, res) => {
   let revenue = 0;
   let numOfOrders = 0;
+  let numOfUnfulfilledOrders = 0;
 
   try {
     const orders = await Order.find({
@@ -145,11 +146,14 @@ const getStoreStats = async (req, res) => {
     for (var x = 0; x < orders.length; x++) {
       revenue += orders[x].total;
       numOfOrders += 1;
+
+      if (orders[x].fulfilled === false) numOfUnfulfilledOrders += 1;
     }
 
     return res.json({
       revenue: revenue,
       numOfOrders: numOfOrders,
+      numOfUnfulfilledOrders: numOfUnfulfilledOrders,
       visits: storefront.visits,
       conversion: (numOfOrders / storefront.visits) * 100,
     });
