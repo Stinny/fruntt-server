@@ -9,7 +9,7 @@ server.use(cookieParser());
 
 server.use(
   cors({
-    origin: 'www.fruntt.com',
+    origin: 'https://fruntt.com',
   })
 );
 
