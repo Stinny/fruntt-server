@@ -10,7 +10,6 @@ server.use(cookieParser());
 server.use(
   cors({
     origin: '*',
-    credentials: false,
   })
 );
 
