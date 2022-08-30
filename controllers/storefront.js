@@ -30,8 +30,10 @@ const addLogo = async (req, res) => {
   try {
     const storefrontToEdit = await Storefront.findById(storeId);
 
-    storefrontToEdit.logo.url = req.body.logoUrl;
-    storefrontToEdit.logo.key = req.body.logoKey;
+    if (req.body.logoUrl !== '' && req.body.logoKey !== '') {
+      storefrontToEdit.logo.url = req.body.logoUrl;
+      storefrontToEdit.logo.key = req.body.logoKey;
+    }
     storefrontToEdit.name = req.body.name;
 
     await storefrontToEdit.save();
