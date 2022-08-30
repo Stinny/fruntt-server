@@ -158,7 +158,7 @@ const getStoreStats = async (req, res) => {
       numOfUnfulfilledOrders: numOfUnfulfilledOrders,
       visits: storefront.visits,
       conversion: (numOfOrders / storefront.visits) * 100,
-      itemStock: product[0].stock,
+      itemStock: product && product[0].stock,
     });
   } catch (err) {
     return res.status(500).json('Server error');
