@@ -9,7 +9,7 @@ server.use(cookieParser());
 
 server.use(
   cors({
-    origin: ['https://fruntt.com', 'https://*.fruntt.com'],
+    origin: '*',
   })
 );
 
