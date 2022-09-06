@@ -20,6 +20,10 @@ router.get('/:productId', product.getProduct);
 //creates product
 router.post('/create', isTokenValid, setUser, product.create);
 
+router.post('/addfaq', isTokenValid, setUser, product.addFAQ);
+
+router.post('/deletefaq', isTokenValid, setUser, product.deleteFAQ);
+
 //updates product
 router.post(
   '/edit/:productId',

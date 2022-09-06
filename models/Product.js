@@ -17,6 +17,12 @@ const ProductSchema = new mongoose.Schema(
     height: { type: Number },
     userId: { type: String },
     storeId: { type: String },
+    faqs: [
+      {
+        question: { type: String },
+        answer: { type: String },
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -212,6 +212,35 @@ const imageDelete = async (req, res) => {
   }
 };
 
+const addFAQ = async (req, res) => {
+  const { productId, question, answer } = req.body;
+
+  try {
+    const product = await Product.findById(productId);
+
+    product.faqs.push({ question: question, answer: answer });
+    await product.save();
+    return res.json('FAQ added');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const deleteFAQ = async (req, res) => {
+  const { productId, faqId } = req.body;
+
+  try {
+    const product = await Product.findById(productId);
+
+    await product.faqs.pull({ _id: faqId });
+    await product.save();
+
+    return res.json('FAQ deleted');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getAll,
   getStoreProducts,
@@ -222,4 +251,6 @@ module.exports = {
   imageUpload,
   imageDelete,
   getItemImages,
+  addFAQ,
+  deleteFAQ,
 };
