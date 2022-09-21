@@ -87,7 +87,7 @@ const update = async (req, res) => {
 
   try {
     const orderToUpdate = await Order.findById(orderId);
-    const updateItemStock = await Product.findById(orderToUpdate.item._id);
+    const updateItem = await Product.findById(orderToUpdate.item._id);
 
     orderToUpdate.firstName = firstName;
     orderToUpdate.lastName = lastName;
@@ -102,23 +102,7 @@ const update = async (req, res) => {
     orderToUpdate.placedOn = new Date();
     orderToUpdate.paid = true;
 
-    updateItemStock.stock -= 1;
-
-    //generate the shipping label
-    const labelUrl = await genShippingLabel({
-      firstName: firstName,
-      lastName: lastName,
-      address: address,
-      city: city,
-      state: state,
-      zip: zip,
-      weight: orderToUpdate.item.weight,
-      height: orderToUpdate.item.height,
-      width: orderToUpdate.item.width,
-      length: orderToUpdate.item.length,
-    });
-
-    orderToUpdate.labelUrl = labelUrl;
+    updateItem.stock -= 1;
 
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(
@@ -143,7 +127,7 @@ const update = async (req, res) => {
     });
 
     await newCustomer.save();
-    await updateItemStock.save();
+    await updateItem.save();
     const savedOrder = await orderToUpdate.save();
     return res.json(savedOrder);
   } catch (err) {
@@ -162,6 +146,22 @@ const markOrderAsFulfilled = async (req, res) => {
     const order = await Order.findById(orderId);
     order.fulfiledOn = new Date();
     order.fulfilled = true;
+
+    //generate the shipping label
+    const labelUrl = await genShippingLabel({
+      firstName: firstName,
+      lastName: lastName,
+      address: address,
+      city: city,
+      state: state,
+      zip: zip,
+      weight: order.item.weight,
+      height: order.item.height,
+      width: order.item.width,
+      length: order.item.length,
+    });
+
+    order.labelUrl = labelUrl;
 
     //send a 'shipping confirmed' email to the customer of this order
     //email should also have the tracking ID OR the url

@@ -93,6 +93,7 @@ const register = async (req, res) => {
     const deployStore = await createSite(req.body.storeName, storeFront._id);
 
     storeFront.url = deployStore.url;
+    storeFront.siteId = deployStore.id;
 
     const accessToken = newUser.genAccessToken();
     const refreshToken = newUser.genRefreshToken();
@@ -168,8 +169,8 @@ const getOnboardUrl = async (req, res) => {
     // const stripeAcc = await stripe.accounts.retrieve(req.user.stripeId);
     const onboardUrl = await stripe.accountLinks.create({
       account: savedUser.stripeId,
-      refresh_url: 'http://localhost:3000/settings',
-      return_url: 'http://localhost:3000/settings',
+      refresh_url: 'https://fruntt.com/settings',
+      return_url: 'https://fruntt.com/settings',
       type: 'account_onboarding',
     });
 

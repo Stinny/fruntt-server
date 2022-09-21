@@ -37,6 +37,7 @@ const createSite = async (storeName, storeId) => {
       env: {
         REACT_APP_STORE_ID: storeId,
         REACT_APP_API_URL: 'https://fruntt-server.herokuapp.com/api',
+        REACT_APP_STORE_NAME: storeName,
       },
     },
   };
