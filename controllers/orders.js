@@ -149,12 +149,12 @@ const markOrderAsFulfilled = async (req, res) => {
 
     //generate the shipping label
     const labelUrl = await genShippingLabel({
-      firstName: firstName,
-      lastName: lastName,
-      address: address,
-      city: city,
-      state: state,
-      zip: zip,
+      firstName: order.firstName,
+      lastName: order.lastName,
+      address: order.shippingAddress.street,
+      city: order.shippingAddress.city,
+      state: order.shippingAddress.state,
+      zip: order.shippingAddress.zipCode,
       weight: order.item.weight,
       height: order.item.height,
       width: order.item.width,
