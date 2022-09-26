@@ -129,7 +129,7 @@ const update = async (req, res) => {
     await newCustomer.save();
     await updateItem.save();
     const savedOrder = await orderToUpdate.save();
-    return res.json({ msg: 'Order updated', order: orderToUpdate });
+    return res.json({ msg: 'Order updated', order: savedOrder });
   } catch (err) {
     return res.status(500).json('Server error');
   }
