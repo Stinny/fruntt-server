@@ -23,6 +23,8 @@ const OrderSchema = new mongoose.Schema(
     labelUrl: { type: String },
     placedOn: { type: Date },
     fulfilledOn: { type: Date },
+    trackingNumber: { type: String },
+    manualTrackingNumber: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

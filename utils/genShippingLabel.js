@@ -59,7 +59,13 @@ const genShippingLabel = async ({
 
   try {
     const result = await shipEngine.createLabelFromShipmentDetails(params);
-    return result.labelDownload.href;
+
+    console.log(result);
+
+    return {
+      url: result.labelDownload.href,
+      trackingNumber: result.trackingNumber,
+    };
   } catch (err) {
     return '';
   }

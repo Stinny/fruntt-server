@@ -129,7 +129,7 @@ const update = async (req, res) => {
     await newCustomer.save();
     await updateItem.save();
     const savedOrder = await orderToUpdate.save();
-    return res.json(savedOrder);
+    return res.json({ msg: 'Order updated', order: orderToUpdate });
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -141,30 +141,41 @@ const markOrderAsFulfilled = async (req, res) => {
   //and send the customer a shipping confirmation email with
   //tracking number
   const orderId = req.params.orderId;
+  const { trackingNum, fulfillType } = req.body;
 
   try {
     const order = await Order.findById(orderId);
+    const storefront = await Storefront.findById(order.storeId);
+
     order.fulfiledOn = new Date();
     order.fulfilled = true;
 
-    //generate the shipping label
-    const labelUrl = await genShippingLabel({
-      firstName: order.firstName,
-      lastName: order.lastName,
-      address: order.shippingAddress.street,
-      city: order.shippingAddress.city,
-      state: order.shippingAddress.state,
-      zip: order.shippingAddress.zipCode,
-      weight: order.item.weight,
-      height: order.item.height,
-      width: order.item.width,
-      length: order.item.length,
-    });
+    //generate the shipping label and tracking number if fulfill type is auto
+    //else
+    //set order tracking number as the manually submitted tracking number
+    if (fulfillType === 'auto') {
+      const labelAndTracking = await genShippingLabel({
+        firstName: order.firstName,
+        lastName: order.lastName,
+        address: order.shippingAddress.street,
+        city: order.shippingAddress.city,
+        state: order.shippingAddress.state,
+        zip: order.shippingAddress.zipcode,
+        weight: order.item.weight,
+        height: order.item.height,
+        width: order.item.width,
+        length: order.item.length,
+      });
 
-    order.labelUrl = labelUrl;
+      order.labelUrl = labelAndTracking.url;
+      order.trackingNumber = labelAndTracking.trackingNumber;
+    } else if (fulfillType === 'manu') {
+      order.trackingNumber = trackingNum;
+      order.manualTrackingNumber = true;
+    }
 
-    //send a 'shipping confirmed' email to the customer of this order
-    //email should also have the tracking ID OR the url
+    // //send a 'shipping confirmed' email to the customer of this order
+    // //email should also have the tracking ID OR the url
 
     await order.save();
 
