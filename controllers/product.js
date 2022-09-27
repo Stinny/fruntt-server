@@ -56,9 +56,6 @@ const create = async (req, res) => {
     imageData,
   } = req.body;
 
-  if (!title || !description || !price || !stock)
-    return res.status(401).json('Not all fields were filled out');
-
   const storeFront = await Storefront.findById(req.user.storeId);
 
   const newProduct = new Product({
