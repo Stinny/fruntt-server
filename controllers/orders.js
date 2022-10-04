@@ -47,7 +47,7 @@ const create = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,
       currency: 'usd',
-      application_fee_amount: total * 0.02 * 100,
+      // application_fee_amount: total * 0.02 * 100,
       automatic_payment_methods: { enabled: true },
       on_behalf_of: storeFrontOwner.stripeId,
       transfer_data: {
