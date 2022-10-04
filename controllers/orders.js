@@ -145,7 +145,6 @@ const markOrderAsFulfilled = async (req, res) => {
 
   try {
     const order = await Order.findById(orderId);
-    const storefront = await Storefront.findById(order.storeId);
 
     order.fulfiledOn = new Date();
     order.fulfilled = true;
@@ -153,6 +152,7 @@ const markOrderAsFulfilled = async (req, res) => {
     //generate the shipping label and tracking number if fulfill type is auto
     //else
     //set order tracking number as the manually submitted tracking number
+
     if (fulfillType === 'auto') {
       const labelAndTracking = await genShippingLabel({
         firstName: order.firstName,
@@ -165,7 +165,14 @@ const markOrderAsFulfilled = async (req, res) => {
         height: order.item.height,
         width: order.item.width,
         length: order.item.length,
+        fromName: 'Fruntt Storefront',
+        fromAddress: order?.item?.shipsFrom?.address,
+        fromState: order?.item?.shipsFrom?.state,
+        fromCity: order?.item?.shipsFrom?.city,
+        fromZip: order?.item?.shipsFrom?.zipcode,
       });
+
+      if (labelAndTracking.error) return res.json('Error');
 
       order.labelUrl = labelAndTracking.url;
       order.trackingNumber = labelAndTracking.trackingNumber;
@@ -185,6 +192,28 @@ const markOrderAsFulfilled = async (req, res) => {
   }
 };
 
+const editShippingAddress = async (req, res) => {
+  const { orderId, address, country, city, state, zipcode } = req.body;
+
+  console.log(req.body);
+
+  try {
+    const order = await Order.findById(orderId);
+
+    order.shippingAddress.street = address;
+    order.shippingAddress.country = country;
+    order.shippingAddress.city = city;
+    order.shippingAddress.state = state;
+    order.shippingAddress.zipcode = zipcode;
+
+    await order.save();
+
+    return res.json('Shipping address updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 const requestReview = async (req, res) => {
   //here we will get a customer with an orderId
   //we want to send an email requesting a review of the item
@@ -199,4 +228,5 @@ module.exports = {
   create,
   update,
   markOrderAsFulfilled,
+  editShippingAddress,
 };

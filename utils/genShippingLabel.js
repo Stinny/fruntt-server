@@ -7,15 +7,17 @@ const genShippingLabel = async ({
   city,
   state,
   zip,
-  country,
-  weightUnit,
-  sizeUnit,
   weight,
   height,
   width,
   length,
   firstName,
   lastName,
+  fromName,
+  fromAddress,
+  fromCity,
+  fromState,
+  fromZip,
 }) => {
   const params = {
     shipment: {
@@ -30,13 +32,13 @@ const genShippingLabel = async ({
         addressResidentialIndicator: 'yes',
       },
       shipFrom: {
-        name: 'John Doe',
-        companyName: 'Example Corp',
+        name: fromName,
+        companyName: fromName,
         phone: '555-555-5555',
-        addressLine1: '4009 Marathon Blvd',
-        cityLocality: 'Austin',
-        stateProvince: 'TX',
-        postalCode: '78756',
+        addressLine1: fromAddress,
+        cityLocality: fromCity,
+        stateProvince: fromState,
+        postalCode: fromZip,
         countryCode: 'US',
         addressResidentialIndicator: 'no',
       },
@@ -65,9 +67,11 @@ const genShippingLabel = async ({
     return {
       url: result.labelDownload.href,
       trackingNumber: result.trackingNumber,
+      error: false,
     };
   } catch (err) {
-    return '';
+    console.log(err);
+    return { url: '', trackingNumber: '', error: true };
   }
 };
 

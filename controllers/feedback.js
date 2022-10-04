@@ -3,6 +3,8 @@ const Feedback = require('../models/Feedback');
 const createFeedback = async (req, res) => {
   const { content, type } = req.body;
 
+  console.log(req.body);
+
   try {
     const newFeedback = new Feedback({
       userId: req.user.id,

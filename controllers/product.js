@@ -54,6 +54,12 @@ const create = async (req, res) => {
     length,
     height,
     imageData,
+    address,
+    city,
+    state,
+    country,
+    zip,
+    options,
   } = req.body;
 
   const storeFront = await Storefront.findById(req.user.storeId);
@@ -72,6 +78,13 @@ const create = async (req, res) => {
     length: length,
     height: height,
     published: published,
+    shipsFrom: {
+      address: address,
+      country: country,
+      city: city,
+      state: state,
+      zipcode: zip,
+    },
   });
 
   //push images data to newProduct doc
@@ -81,6 +94,13 @@ const create = async (req, res) => {
         url: imageData[i].url,
         key: imageData[i].key,
       });
+    }
+  }
+
+  //push the options data
+  if (options.length) {
+    for (var i = 0; i < options.length; i++) {
+      newProduct.options.push(options[i]);
     }
   }
 

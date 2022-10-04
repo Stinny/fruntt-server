@@ -17,12 +17,20 @@ const ProductSchema = new mongoose.Schema(
     height: { type: Number },
     userId: { type: String },
     storeId: { type: String },
+    shipsFrom: {
+      address: { type: String },
+      country: { type: String },
+      state: { type: String },
+      city: { type: String },
+      zipcode: { type: String },
+    },
     faqs: [
       {
         question: { type: String },
         answer: { type: String },
       },
     ],
+    options: [],
   },
   { timestamps: true }
 );
