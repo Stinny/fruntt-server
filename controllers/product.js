@@ -127,11 +127,12 @@ const update = async (req, res) => {
     weight,
     height,
     width,
+    options,
     length,
     imageData,
   } = req.body;
 
-  //   console.log(imageData);
+  console.log(req.body);
 
   try {
     const productToUpdate = await Product.findById(productId);
@@ -159,11 +160,15 @@ const update = async (req, res) => {
       }
     }
 
+    //push options data to doc
+    productToUpdate.options = options;
+
     //save the updates to the product doc
     await productToUpdate.save();
 
     res.status(200).json('Item updated');
   } catch (err) {
+    console.log(err);
     res.status(500).json('Server Error');
   }
 };
