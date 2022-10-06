@@ -8,6 +8,7 @@ const genShippingLabel = async ({
   state,
   zip,
   weight,
+  weightUnit,
   height,
   width,
   length,
@@ -19,6 +20,7 @@ const genShippingLabel = async ({
   fromState,
   fromZip,
 }) => {
+  console.log(fromZip, zip);
   const params = {
     shipment: {
       serviceCode: 'ups_ground',
@@ -46,14 +48,14 @@ const genShippingLabel = async ({
         {
           weight: {
             value: weight,
-            unit: 'ounce',
+            unit: weightUnit,
           },
-          dimensions: {
-            height: height,
-            width: width,
-            length: length,
-            unit: 'inch',
-          },
+          // dimensions: {
+          //   height: height,
+          //   width: width,
+          //   length: length,
+          //   unit: 'inch',
+          // },
         },
       ],
     },

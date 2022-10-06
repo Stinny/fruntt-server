@@ -48,11 +48,7 @@ const create = async (req, res) => {
     stock,
     published,
     weightUnit,
-    sizeUnit,
     weight,
-    width,
-    length,
-    height,
     imageData,
     address,
     city,
@@ -72,11 +68,7 @@ const create = async (req, res) => {
     storeId: req.user.storeId,
     stock: stock,
     weightUnit: weightUnit,
-    sizeUnit: sizeUnit,
     weight: weight,
-    width: width,
-    length: length,
-    height: height,
     published: published,
     shipsFrom: {
       address: address,
@@ -123,16 +115,15 @@ const update = async (req, res) => {
     stock,
     published,
     weightUnit,
-    sizeUnit,
     weight,
-    height,
-    width,
+    address,
+    country,
+    state,
+    city,
+    zipcode,
     options,
-    length,
     imageData,
   } = req.body;
-
-  console.log(req.body);
 
   try {
     const productToUpdate = await Product.findById(productId);
@@ -144,11 +135,12 @@ const update = async (req, res) => {
     productToUpdate.stock = stock;
     productToUpdate.published = published;
     productToUpdate.weightUnit = weightUnit;
-    productToUpdate.sizeUnit = sizeUnit;
     productToUpdate.weight = weight;
-    productToUpdate.height = height;
-    productToUpdate.length = length;
-    productToUpdate.width = width;
+    productToUpdate.shipsFrom.address = address;
+    productToUpdate.shipsFrom.country = country;
+    productToUpdate.shipsFrom.state = state;
+    productToUpdate.shipsFrom.city = city;
+    productToUpdate.shipsFrom.zipcode = zipcode;
 
     //push image data to doc
     if (imageData.length) {

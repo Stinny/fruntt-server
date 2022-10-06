@@ -10,11 +10,7 @@ const ProductSchema = new mongoose.Schema(
     type: { type: String, default: 'Physical' },
     published: { type: Boolean, required: true, default: false },
     weightUnit: { type: String },
-    sizeUnit: { type: String },
     weight: { type: Number },
-    length: { type: Number },
-    width: { type: Number },
-    height: { type: Number },
     userId: { type: String },
     storeId: { type: String },
     shipsFrom: {

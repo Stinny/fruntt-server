@@ -5,7 +5,7 @@ const Storefront = require('../models/Storefront');
 const stripe = require('stripe')(process.env.SK_TEST);
 const { createSite } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
-const sendSignupEmail = require('../email/sendSignupEmail');
+const { sendSignupEmail } = require('../email/transactional');
 
 const login = async (req, res) => {
   try {
@@ -98,7 +98,7 @@ const register = async (req, res) => {
     const accessToken = newUser.genAccessToken();
     const refreshToken = newUser.genRefreshToken();
 
-    sendSignupEmail(req.body.email, newUser._id);
+    await sendSignupEmail(req.body.email, newUser._id);
 
     //deconstructs the newUser doc so we don't return the password
     const { password, ...otherInfo } = newUser._doc;

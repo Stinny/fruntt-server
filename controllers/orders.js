@@ -38,16 +38,17 @@ const getStoreOrders = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { total, storeId, item, qty } = req.body;
-    // const storeId = req.params.storeId;
 
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
+
+    const applicationFee = total * 0.02;
 
     //need to get the stores stripe account ID and add to paymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,
       currency: 'usd',
-      // application_fee_amount: total * 0.02 * 100,
+      application_fee_amount: applicationFee * 100,
       automatic_payment_methods: { enabled: true },
       on_behalf_of: storeFrontOwner.stripeId,
       transfer_data: {
@@ -125,6 +126,8 @@ const update = async (req, res) => {
       },
       storeId: orderToUpdate.storeId,
       orderId: orderToUpdate._id,
+      orderedOn: new Date(),
+      productId: orderToUpdate.item._id,
     });
 
     await newCustomer.save();
@@ -163,6 +166,7 @@ const markOrderAsFulfilled = async (req, res) => {
         state: order.shippingAddress.state,
         zip: order.shippingAddress.zipcode,
         weight: order.item.weight,
+        weightUnit: order.item.weightUnit,
         height: order.item.height,
         width: order.item.width,
         length: order.item.length,

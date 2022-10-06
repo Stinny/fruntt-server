@@ -11,8 +11,13 @@ const customerSchema = new mongoose.Schema({
     street: { type: String },
     zipcode: { type: String },
   },
+  reviewed: { type: Boolean, default: false },
+  rating: { type: Number },
+  review: { type: String },
   storeId: { type: String },
+  productId: { type: String },
   orderId: { type: String },
+  orderedOn: { type: Date },
 });
 
 const Customer = mongoose.model('Customer', customerSchema);
