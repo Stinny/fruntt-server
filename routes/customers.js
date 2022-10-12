@@ -7,6 +7,8 @@ router.get('/', isTokenValid, setUser, customer.getAll);
 
 router.get('/singlecustomer/:customerId', customer.getSingleCustomer);
 
+router.post('/sendreviewemail', customer.sendReviewEmail);
+
 router.post('/addreview', customer.addReview);
 
 module.exports = router;

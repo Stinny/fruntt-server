@@ -4,6 +4,7 @@ const Customer = require('../models/Customer');
 const User = require('../models/User');
 const { genShippingLabel } = require('../utils/genShippingLabel');
 const Product = require('../models/Product');
+const { sendOrderConfirmEmail } = require('../email/transactional');
 const stripe = require('stripe')(process.env.SK_TEST);
 
 //gets a single order
@@ -90,6 +91,7 @@ const update = async (req, res) => {
   try {
     const orderToUpdate = await Order.findById(orderId);
     const updateItem = await Product.findById(orderToUpdate.item._id);
+    const storefront = await Storefront.findById(orderToUpdate.storeId);
 
     orderToUpdate.firstName = firstName;
     orderToUpdate.lastName = lastName;
@@ -130,11 +132,24 @@ const update = async (req, res) => {
       productId: orderToUpdate.item._id,
     });
 
+    await sendOrderConfirmEmail({
+      customerEmail: orderToUpdate.email,
+      customerName: orderToUpdate.firstName,
+      orderId: orderToUpdate._id,
+      orderItem: orderToUpdate.item.title,
+      orderItemPrice: orderToUpdate.item.price,
+      orderTotal: orderToUpdate.total,
+      orderQty: orderToUpdate.qty,
+      storeEmail: storefront.email,
+      storeName: storefront.name,
+    });
+
     await newCustomer.save();
     await updateItem.save();
     const savedOrder = await orderToUpdate.save();
     return res.json({ msg: 'Order updated', order: savedOrder });
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };

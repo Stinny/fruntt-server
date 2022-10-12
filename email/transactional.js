@@ -14,15 +14,16 @@ const sendSignupEmail = async (receiver, userId) => {
   });
 };
 
-const sendReviewLinkEmail = async (
+const sendReviewLinkEmail = async ({
+  customerId,
   customerName,
   customerEmail,
   storeName,
   storeUrl,
-  storeEmail
-) => {
+  storeEmail,
+}) => {
   await client.sendEmailWithTemplate({
-    From: storeUrl,
+    From: `${storeName}@fruntt.com`,
     To: customerEmail,
     ReplyTo: storeEmail,
     TemplateAlias: 'itemReview',
@@ -30,8 +31,61 @@ const sendReviewLinkEmail = async (
       customerName: customerName,
       storeUrl: storeUrl,
       storeName: storeName,
+      customerId: customerId,
     },
   });
 };
 
-module.exports = { sendSignupEmail, sendReviewLinkEmail };
+const sendOrderConfirmEmail = async ({
+  customerEmail,
+  customerName,
+  orderId,
+  storeEmail,
+  storeName,
+  orderItem,
+  orderItemPrice,
+  orderTotal,
+  orderQty,
+}) => {
+  await client.sendEmailWithTemplate({
+    From: `${storeName}@fruntt.com`,
+    To: customerEmail,
+    ReplyTo: storeEmail,
+    TemplateAlias: 'orderConfirm',
+    TemplateModel: {
+      customerName: customerName,
+      orderId: orderId,
+      storeName: storeName,
+      orderItem: orderItem,
+      orderItemPrice: orderItemPrice,
+      orderTotal: orderTotal,
+      orderQty: orderQty,
+    },
+  });
+};
+
+const sendOrderFulfilledEmail = async ({
+  customerEmail,
+  customerName,
+  storeName,
+  trackingUrl,
+}) => {
+  await client.sendEmailWithTemplate({
+    From: `${storeName}@fruntt.com`,
+    To: customerEmail,
+    ReplyTo: storeEmail,
+    TemplateAlias: 'orderConfirm',
+    TemplateModel: {
+      customerName: customerName,
+      storeName: storeName,
+      trackingUrl: trackingUrl,
+    },
+  });
+};
+
+module.exports = {
+  sendSignupEmail,
+  sendReviewLinkEmail,
+  sendOrderConfirmEmail,
+  sendOrderFulfilledEmail,
+};

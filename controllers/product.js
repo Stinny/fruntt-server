@@ -1,6 +1,8 @@
 const Product = require('../models/Product');
+const Customer = require('../models/Customer');
 const { uploadToS3, deleteObjFromS3 } = require('../utils/uploadToS3');
 const Storefront = require('../models/Storefront');
+const { validateBusAddress } = require('../utils/genShippingLabel');
 
 //gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
@@ -13,14 +15,36 @@ const getAll = async (req, res) => {
   }
 };
 
-//gets a single item for a storefront
+//gets a single item for a storefront and any reviews
 const getStoreProducts = async (req, res) => {
   const storeId = req.params.storeId;
+  let totalRating = 0;
 
   try {
+    const reviews = [];
     const product = await Product.find({ storeId: storeId }); //returns an array
     const item = product[0]; //first item in the returned array from line above
-    return res.json(item);
+
+    const customers = await Customer.find({
+      productId: item._id,
+      reviewed: true,
+    });
+
+    for (var i = 0; i < customers.length; i++) {
+      totalRating += customers[i].rating;
+      reviews.push({
+        review: customers[i].review,
+        rating: customers[i].rating,
+        customerName: `${customers[i].firstName} ${customers[i].lastName}`,
+        reviewedOn: customers[i].reviewedOn,
+      });
+    }
+
+    return res.json({
+      item: item,
+      reviews: reviews,
+      totalRating: totalRating / customers.length,
+    });
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -58,7 +82,9 @@ const create = async (req, res) => {
     options,
   } = req.body;
 
-  const storeFront = await Storefront.findById(req.user.storeId);
+  //try to validate address
+  const validAddress = await validateBusAddress({ address, city, state, zip });
+  if (validAddress === 'Invalid address') return res.json('Invalid address');
 
   const newProduct = new Product({
     title: title,
@@ -127,6 +153,16 @@ const update = async (req, res) => {
 
   try {
     const productToUpdate = await Product.findById(productId);
+
+    //try to validate address
+    const validAddress = await validateBusAddress({
+      address,
+      city,
+      state,
+      zip: zipcode,
+    });
+    console.log(validAddress);
+    if (validAddress === 'Invalid address') return res.json('Invalid address');
 
     //make updates
     productToUpdate.title = title;

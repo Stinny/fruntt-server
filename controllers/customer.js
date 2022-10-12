@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { sendReviewLinkEmail } = require('../email/transactional');
 const Order = require('../models/Order');
 
+//gets all customers from a storeId
 const getAll = async (req, res) => {
   try {
     const customers = await Customer.find({ storeId: req.user.storeId });
@@ -12,6 +13,35 @@ const getAll = async (req, res) => {
     return res.status(500).json(err);
   }
 };
+
+//gets all customers from a productId and gathers reviews
+// const getReviews = async (req, res) => {
+//   try {
+//     const reviews = [];
+
+//     const customers = await Customer.find({
+//       productId: req.params.productId,
+//       reviewed: true,
+//     });
+
+//     console.log(req.params.productId);
+
+//     for (var i = 0; i < customers.length; i++) {
+//       reviews.push({
+//         review: customers[i].review,
+//         rating: customers[i].rating,
+//         customerName: customers[i].firstName + '' + customers[i].lastName,
+//         reviewedOn: customers[i].reviewedOn,
+//       });
+//     }
+
+//     console.log(reviews);
+
+//     return res.json(reviews);
+//   } catch (err) {
+//     return res.status(500).json('Server error');
+//   }
+// };
 
 const getSingleCustomer = async (req, res) => {
   const customerId = req.params.customerId;
@@ -35,6 +65,7 @@ const addReview = async (req, res) => {
     customer.review = content;
     customer.rating = rating;
     customer.reviewed = true;
+    customer.reviewedOn = new Date();
 
     await customer.save();
 
@@ -46,7 +77,9 @@ const addReview = async (req, res) => {
 
 //sends email to customer
 const sendReviewEmail = async (req, res) => {
-  const { customerEmail, customerId, storeId } = req.body;
+  const { customerId, storeId } = req.body;
+
+  console.log(req.body);
 
   try {
     const customer = await Customer.findById(customerId);
@@ -55,16 +88,27 @@ const sendReviewEmail = async (req, res) => {
 
     await sendReviewLinkEmail({
       customerEmail: customer.email,
+      customerId: customerId,
       customerName: customer.firstName,
       storeUrl: storefront.url,
       storeName: storefront.name,
       storeEmail: storefrontOwner.email,
     });
 
-    await sendReviewLinkEmail();
-  } catch {
+    customer.emailSent = true;
+
+    await customer.save();
+
+    return res.json('Email sent');
+  } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
 
-module.exports = { getAll, addReview, getSingleCustomer, sendReviewEmail };
+module.exports = {
+  getAll,
+  addReview,
+  getSingleCustomer,
+  sendReviewEmail,
+};

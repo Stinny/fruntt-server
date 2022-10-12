@@ -20,7 +20,6 @@ const genShippingLabel = async ({
   fromState,
   fromZip,
 }) => {
-  console.log(fromZip, zip);
   const params = {
     shipment: {
       serviceCode: 'ups_ground',
@@ -50,12 +49,6 @@ const genShippingLabel = async ({
             value: weight,
             unit: weightUnit,
           },
-          // dimensions: {
-          //   height: height,
-          //   width: width,
-          //   length: length,
-          //   unit: 'inch',
-          // },
         },
       ],
     },
@@ -77,4 +70,56 @@ const genShippingLabel = async ({
   }
 };
 
-module.exports = { genShippingLabel };
+const validateResAddress = async ({ address, city, state, zip }) => {
+  const params = [
+    {
+      addressLine1: address,
+      cityLocality: city,
+      stateProvince: state,
+      postalCode: zip,
+      countryCode: 'US',
+      addressResidentialIndicator: 'yes',
+    },
+  ];
+
+  try {
+    const result = await shipEngine.validateAddresses(params);
+
+    if (result[0].status === 'verified') {
+      return 'Valid address';
+    } else {
+      return 'Invalid address';
+    }
+  } catch (e) {
+    console.log('Error validating address: ', e.message);
+    return 'Error';
+  }
+};
+
+const validateBusAddress = async ({ address, city, state, zip }) => {
+  const params = [
+    {
+      addressLine1: address,
+      cityLocality: city,
+      stateProvince: state,
+      postalCode: zip,
+      countryCode: 'US',
+      addressResidentialIndicator: 'no',
+    },
+  ];
+
+  try {
+    const result = await shipEngine.validateAddresses(params);
+
+    if (result[0].status === 'verified') {
+      return 'Valid address';
+    } else if (result[0].status === 'error') {
+      return 'Invalid address';
+    }
+  } catch (e) {
+    console.log('Error validating address: ', e.message);
+    return 'Invalid address';
+  }
+};
+
+module.exports = { genShippingLabel, validateResAddress, validateBusAddress };
