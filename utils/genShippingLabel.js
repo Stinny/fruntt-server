@@ -2,66 +2,41 @@ const ShipEngine = require('shipengine');
 
 const shipEngine = new ShipEngine(process.env.SHIP_KEY);
 
+//generates a shipping label and other shipping details
 const genShippingLabel = async ({
-  address,
-  city,
-  state,
-  zip,
-  weight,
-  weightUnit,
-  height,
-  width,
-  length,
-  firstName,
-  lastName,
-  fromName,
-  fromAddress,
-  fromCity,
-  fromState,
-  fromZip,
+  rateId,
+  // address,
+  // city,
+  // state,
+  // zip,
+  // weight,
+  // weightUnit,
+  // firstName,
+  // lastName,
+  // fromName,
+  // fromAddress,
+  // fromCity,
+  // fromState,
+  // fromZip,
+  // fromPhone,
 }) => {
   const params = {
-    shipment: {
-      serviceCode: 'ups_ground',
-      shipTo: {
-        name: `${firstName} ${lastName}`,
-        addressLine1: address,
-        cityLocality: city,
-        stateProvince: state,
-        postalCode: zip,
-        countryCode: 'US',
-        addressResidentialIndicator: 'yes',
-      },
-      shipFrom: {
-        name: fromName,
-        companyName: fromName,
-        phone: '555-555-5555',
-        addressLine1: fromAddress,
-        cityLocality: fromCity,
-        stateProvince: fromState,
-        postalCode: fromZip,
-        countryCode: 'US',
-        addressResidentialIndicator: 'no',
-      },
-      packages: [
-        {
-          weight: {
-            value: weight,
-            unit: weightUnit,
-          },
-        },
-      ],
-    },
+    rateId: rateId,
+    validateAddress: 'no_validation',
+    labelLayout: '4x6',
+    labelFormat: 'pdf',
+    labelDownloadType: 'url',
+    displayScheme: 'label',
   };
 
   try {
-    const result = await shipEngine.createLabelFromShipmentDetails(params);
-
-    console.log(result);
+    const result = await shipEngine.createLabelFromRate(params);
 
     return {
       url: result.labelDownload.href,
       trackingNumber: result.trackingNumber,
+      labelId: result.labelId,
+      amount: result.shipmentCost.amount,
       error: false,
     };
   } catch (err) {
@@ -70,6 +45,7 @@ const genShippingLabel = async ({
   }
 };
 
+//validates a residential address
 const validateResAddress = async ({ address, city, state, zip }) => {
   const params = [
     {
@@ -96,6 +72,7 @@ const validateResAddress = async ({ address, city, state, zip }) => {
   }
 };
 
+//validates a business address
 const validateBusAddress = async ({ address, city, state, zip }) => {
   const params = [
     {
@@ -122,4 +99,82 @@ const validateBusAddress = async ({ address, city, state, zip }) => {
   }
 };
 
-module.exports = { genShippingLabel, validateResAddress, validateBusAddress };
+const trackOrderUsingLabelId = async (labelId) => {
+  try {
+    const result = await shipEngine.trackUsingLabelId(labelId);
+    console.log(result);
+
+    return result;
+  } catch (e) {
+    console.log('Error tracking shipment: ', e.message);
+    return '';
+  }
+};
+
+const getShippingRates = async ({
+  address,
+  country,
+  city,
+  state,
+  zip,
+  weight,
+  unit,
+  fromAddress,
+  fromCity,
+  fromCountry,
+  fromState,
+  fromZip,
+}) => {
+  const params = {
+    rateOptions: {
+      carrierIds: ['se-2654964'],
+    },
+    shipment: {
+      validateAddress: 'no_validation',
+      shipTo: {
+        name: 'Amanda Miller',
+        phone: '555-555-5555',
+        addressLine1: address,
+        cityLocality: city,
+        stateProvince: state,
+        postalCode: zip,
+        countryCode: 'US',
+        addressResidentialIndicator: 'yes',
+      },
+      shipFrom: {
+        name: 'John Doe',
+        phone: '111-111-1111',
+        addressLine1: fromAddress,
+        cityLocality: fromCity,
+        stateProvince: fromState,
+        postalCode: fromZip,
+        countryCode: 'US',
+        addressResidentialIndicator: 'no',
+      },
+      packages: [
+        {
+          weight: {
+            value: weight,
+            unit: unit,
+          },
+        },
+      ],
+    },
+  };
+
+  try {
+    const result = await shipEngine.getRatesWithShipmentDetails(params);
+
+    return result.rateResponse;
+  } catch (e) {
+    console.log('Error creating rates: ', e.message);
+  }
+};
+
+module.exports = {
+  genShippingLabel,
+  validateResAddress,
+  validateBusAddress,
+  trackOrderUsingLabelId,
+  getShippingRates,
+};

@@ -2,9 +2,16 @@ const Order = require('../models/Order');
 const Storefront = require('../models/Storefront');
 const Customer = require('../models/Customer');
 const User = require('../models/User');
-const { genShippingLabel } = require('../utils/genShippingLabel');
+const {
+  genShippingLabel,
+  trackOrderUsingLabelId,
+  getShippingRates,
+} = require('../utils/genShippingLabel');
 const Product = require('../models/Product');
-const { sendOrderConfirmEmail } = require('../email/transactional');
+const {
+  sendOrderConfirmEmail,
+  sendOrderFulfilledEmail,
+} = require('../email/transactional');
 const stripe = require('stripe')(process.env.SK_TEST);
 
 //gets a single order
@@ -57,9 +64,17 @@ const create = async (req, res) => {
       },
     });
 
+    //create payment intent for merchent to purchase a label
+    const labelPaymentIntent = await stripe.paymentIntents.create({
+      amount: 50000,
+      currency: 'usd',
+    });
+
     const newOrder = new Order({
       paymentId: paymentIntent.id,
       clientId: paymentIntent.client_secret,
+      labelPaymentId: labelPaymentIntent.id,
+      labelPaymentSecret: labelPaymentIntent.client_secret,
       storeId: storeId,
       item: item,
       qty: qty,
@@ -155,58 +170,53 @@ const update = async (req, res) => {
 };
 
 const markOrderAsFulfilled = async (req, res) => {
-  //here we will retrieve the order from db based on ID
-  //mark it as fulfilled
-  //and send the customer a shipping confirmation email with
-  //tracking number
   const orderId = req.params.orderId;
   const { trackingNum, fulfillType } = req.body;
 
   try {
     const order = await Order.findById(orderId);
+    const storefront = await Storefront.findById(order.storeId);
 
-    order.fulfiledOn = new Date();
     order.fulfilled = true;
+    order.fulfiledOn = new Date();
 
-    //generate the shipping label and tracking number if fulfill type is auto
-    //else
-    //set order tracking number as the manually submitted tracking number
-
-    if (fulfillType === 'auto') {
-      const labelAndTracking = await genShippingLabel({
-        firstName: order.firstName,
-        lastName: order.lastName,
-        address: order.shippingAddress.street,
-        city: order.shippingAddress.city,
-        state: order.shippingAddress.state,
-        zip: order.shippingAddress.zipcode,
-        weight: order.item.weight,
-        weightUnit: order.item.weightUnit,
-        height: order.item.height,
-        width: order.item.width,
-        length: order.item.length,
-        fromName: 'Fruntt Storefront',
-        fromAddress: order?.item?.shipsFrom?.address,
-        fromState: order?.item?.shipsFrom?.state,
-        fromCity: order?.item?.shipsFrom?.city,
-        fromZip: order?.item?.shipsFrom?.zipcode,
-      });
-
-      if (labelAndTracking.error) return res.json('Error');
-
-      order.labelUrl = labelAndTracking.url;
-      order.trackingNumber = labelAndTracking.trackingNumber;
-    } else if (fulfillType === 'manu') {
+    if (fulfillType === 'manu') {
       order.trackingNumber = trackingNum;
       order.manualTrackingNumber = true;
     }
 
-    // //send a 'shipping confirmed' email to the customer of this order
-    // //email should also have the tracking ID OR the url
+    await sendOrderFulfilledEmail({
+      customerEmail: order?.email,
+      customerName: order?.firstName,
+      storeName: storefront?.name,
+      storeUrl: storefront?.url,
+      orderId: order._id,
+    });
 
     await order.save();
 
     return res.json('Order fulfilled');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+const getShippingLabel = async (req, res) => {
+  const { orderId, rateId } = req.body;
+
+  try {
+    const order = await Order.findById(orderId);
+
+    const labelAndTracking = await genShippingLabel({ rateId: rateId });
+
+    order.labelId = labelAndTracking.labelId;
+    order.trackingNumber = labelAndTracking.trackingNumber;
+    order.labelUrl = labelAndTracking.url;
+
+    //you need to confirm a paymentIntent with the labelAndTracking.amount
+    await order.save();
+    return res.json('Label created');
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -214,8 +224,6 @@ const markOrderAsFulfilled = async (req, res) => {
 
 const editShippingAddress = async (req, res) => {
   const { orderId, address, country, city, state, zipcode } = req.body;
-
-  console.log(req.body);
 
   try {
     const order = await Order.findById(orderId);
@@ -234,12 +242,65 @@ const editShippingAddress = async (req, res) => {
   }
 };
 
-const requestReview = async (req, res) => {
-  //here we will get a customer with an orderId
-  //we want to send an email requesting a review of the item
-  //within the order
-  //we also want to create a review doc
-  //containing the customerId, orderId, and review content(text, rating)
+const getOrderStatus = async (req, res) => {
+  const orderId = req.params.orderId;
+  let trackOrderReq;
+
+  console.log(orderId);
+
+  try {
+    const order = await Order.findById(orderId);
+
+    if (order.labelId) {
+      trackOrderReq = await trackOrderUsingLabelId(order.labelId);
+    }
+
+    return res.json(trackOrderReq);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+const getRates = async (req, res) => {
+  const orderId = req.params.orderId;
+  const rates = [];
+
+  try {
+    const order = await Order.findById(orderId);
+
+    if (order.fulfilled || order.labelUrl) return res.json(rates);
+
+    const rateResponse = await getShippingRates({
+      address: order.shippingAddress.street,
+      country: order.shippingAddress.country,
+      city: order.shippingAddress.city,
+      state: order.shippingAddress.state,
+      zip: order.shippingAddress.zipcode,
+      weight: order.item.weight,
+      unit: order.item.weightUnit,
+      fromAddress: order.item.shipsFrom.address,
+      fromCity: order.item.shipsFrom.city,
+      fromState: order.item.shipsFrom.state,
+      fromZip: order.item.shipsFrom.zipcode,
+    });
+
+    const ratesArr = rateResponse.rates;
+
+    for (var i = 0; i < ratesArr.length; i++) {
+      rates.push({
+        rateId: ratesArr[i].rateId,
+        amount: ratesArr[i].shippingAmount.amount,
+        date: ratesArr[i].estimatedDeliveryDate,
+        service: ratesArr[i].serviceType,
+      });
+    }
+
+    return res.json(rates);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
 };
 
 module.exports = {
@@ -249,4 +310,7 @@ module.exports = {
   update,
   markOrderAsFulfilled,
   editShippingAddress,
+  getOrderStatus,
+  getRates,
+  getShippingLabel,
 };

@@ -19,4 +19,10 @@ router.post('/fulfill/:orderId', orders.markOrderAsFulfilled);
 
 router.post('/shippingaddress', orders.editShippingAddress);
 
+router.get('/status/:orderId', orders.getOrderStatus);
+
+router.get('/rates/:orderId', orders.getRates);
+
+router.post('/shippinglabel', orders.getShippingLabel);
+
 module.exports = router;
