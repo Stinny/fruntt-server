@@ -267,6 +267,69 @@ const confirmEmail = async (req, res) => {
   }
 };
 
+const addPaymentMethod = async (req, res) => {
+  const { paymentMethodId } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: user.customerId,
+    });
+
+    console.log(paymentMethod);
+
+    user.paymentAdded = true;
+    user.paymentMethod.id = paymentMethodId;
+    user.paymentMethod.brand = paymentMethod.card.brand;
+    user.paymentMethod.lastFour = paymentMethod.card.last4;
+
+    await user.save();
+
+    return res.json('Payment added');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+//removes paymentMethod from stripe customer and from the user doc
+const deletePaymentMethod = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    const detatchPaymentMethod = await stripe.paymentMethods.detach(
+      user.paymentMethod.id
+    );
+
+    user.paymentMethod = {};
+
+    user.paymentAdded = false;
+
+    await user.save();
+
+    return res.json('Payment deleted');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+//creates a setupIntent for adding payments to account
+const getSetupIntent = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    const setupIntent = await stripe.setupIntents.create({
+      customer: user.customerId,
+      usage: 'on_session',
+    });
+
+    return res.json({ success: true, setupIntent: setupIntent });
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -278,4 +341,7 @@ module.exports = {
   updateBusinessInfo,
   updateNotifications,
   confirmEmail,
+  getSetupIntent,
+  addPaymentMethod,
+  deletePaymentMethod,
 };

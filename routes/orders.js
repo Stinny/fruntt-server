@@ -23,6 +23,6 @@ router.get('/status/:orderId', orders.getOrderStatus);
 
 router.get('/rates/:orderId', orders.getRates);
 
-router.post('/shippinglabel', orders.getShippingLabel);
+router.post('/shippinglabel', isTokenValid, setUser, orders.getShippingLabel);
 
 module.exports = router;

@@ -19,6 +19,12 @@ const UserSchema = new mongoose.Schema(
     sendItemOutOfStock: { type: Boolean, default: true },
     sendReviewCollected: { type: Boolean, default: true },
     emailConfirmed: { type: Boolean, default: false },
+    paymentAdded: { type: Boolean, default: false },
+    paymentMethod: {
+      id: { type: String },
+      brand: { type: String },
+      lastFour: { type: String },
+    },
     business: {
       name: { type: String },
       address: { type: String },

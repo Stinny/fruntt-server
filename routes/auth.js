@@ -8,6 +8,7 @@ router.post('/register', auth.register);
 router.get('/updateduser', isTokenValid, setUser, auth.updatedUser);
 router.get('/refresh/:refreshTkn', auth.getNewAccessToken);
 router.get('/onboard', isTokenValid, setUser, auth.getOnboardUrl);
+router.get('/getsetupintent', isTokenValid, setUser, auth.getSetupIntent);
 router.post('/disconnectstripe', isTokenValid, setUser, auth.disconnectStripe);
 router.post(
   '/updateaccountinfo',
@@ -28,5 +29,8 @@ router.post(
   auth.updateNotifications
 );
 router.post('/confirmemail', isTokenValid, setUser, auth.confirmEmail);
+
+router.post('/addpayment', isTokenValid, setUser, auth.addPaymentMethod);
+router.post('/deletepayment', isTokenValid, setUser, auth.deletePaymentMethod);
 
 module.exports = router;

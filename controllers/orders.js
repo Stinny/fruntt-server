@@ -64,17 +64,16 @@ const create = async (req, res) => {
       },
     });
 
-    //create payment intent for merchent to purchase a label
-    const labelPaymentIntent = await stripe.paymentIntents.create({
-      amount: 50000,
-      currency: 'usd',
-    });
+    // //create payment intent for merchent to purchase a label
+    // const labelPaymentIntent = await stripe.paymentIntents.create({
+    //   amount: 50000,
+    //   currency: 'usd',
+    // });
 
     const newOrder = new Order({
       paymentId: paymentIntent.id,
       clientId: paymentIntent.client_secret,
       labelPaymentId: labelPaymentIntent.id,
-      labelPaymentSecret: labelPaymentIntent.client_secret,
       storeId: storeId,
       item: item,
       qty: qty,
@@ -203,20 +202,40 @@ const markOrderAsFulfilled = async (req, res) => {
 };
 
 const getShippingLabel = async (req, res) => {
-  const { orderId, rateId } = req.body;
+  const { orderId, rateId, amount } = req.body;
+
+  console.log(req.body);
 
   try {
     const order = await Order.findById(orderId);
+    const user = await User.findById(req.user.id);
 
-    const labelAndTracking = await genShippingLabel({ rateId: rateId });
+    const labelPaymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100,
+      currency: 'usd',
+      customer: user.customerId,
+      payment_method: user.paymentMethod.id,
+      confirm: true,
+    });
 
-    order.labelId = labelAndTracking.labelId;
-    order.trackingNumber = labelAndTracking.trackingNumber;
-    order.labelUrl = labelAndTracking.url;
+    console.log(labelPaymentIntent);
 
-    //you need to confirm a paymentIntent with the labelAndTracking.amount
-    await order.save();
-    return res.json('Label created');
+    if (labelPaymentIntent.status === 'succeeded') {
+      const labelAndTracking = await genShippingLabel({ rateId: rateId });
+
+      order.labelId = labelAndTracking.labelId;
+      order.trackingNumber = labelAndTracking.trackingNumber;
+      order.labelUrl = labelAndTracking.url;
+
+      await order.save();
+
+      return res.json({ error: false, msg: 'Label created' });
+    } else {
+      return res.json({
+        error: true,
+        msg: 'There was an error with the payment',
+      });
+    }
   } catch (err) {
     return res.status(500).json('Server error');
   }
