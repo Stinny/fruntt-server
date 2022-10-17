@@ -14,42 +14,14 @@ const getAll = async (req, res) => {
   }
 };
 
-//gets all customers from a productId and gathers reviews
-// const getReviews = async (req, res) => {
-//   try {
-//     const reviews = [];
-
-//     const customers = await Customer.find({
-//       productId: req.params.productId,
-//       reviewed: true,
-//     });
-
-//     console.log(req.params.productId);
-
-//     for (var i = 0; i < customers.length; i++) {
-//       reviews.push({
-//         review: customers[i].review,
-//         rating: customers[i].rating,
-//         customerName: customers[i].firstName + '' + customers[i].lastName,
-//         reviewedOn: customers[i].reviewedOn,
-//       });
-//     }
-
-//     console.log(reviews);
-
-//     return res.json(reviews);
-//   } catch (err) {
-//     return res.status(500).json('Server error');
-//   }
-// };
-
 const getSingleCustomer = async (req, res) => {
   const customerId = req.params.customerId;
+
   try {
     const customer = await Customer.findById(customerId);
-    const order = await Order.findById(customer?.orderId);
+    // const order = await Order.findById(customer?.orderId);
 
-    return res.json({ customer: customer, order: order });
+    return res.json(customer);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -78,8 +50,6 @@ const addReview = async (req, res) => {
 //sends email to customer
 const sendReviewEmail = async (req, res) => {
   const { customerId, storeId } = req.body;
-
-  console.log(req.body);
 
   try {
     const customer = await Customer.findById(customerId);

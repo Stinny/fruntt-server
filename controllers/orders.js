@@ -64,16 +64,9 @@ const create = async (req, res) => {
       },
     });
 
-    // //create payment intent for merchent to purchase a label
-    // const labelPaymentIntent = await stripe.paymentIntents.create({
-    //   amount: 50000,
-    //   currency: 'usd',
-    // });
-
     const newOrder = new Order({
       paymentId: paymentIntent.id,
       clientId: paymentIntent.client_secret,
-      labelPaymentId: labelPaymentIntent.id,
       storeId: storeId,
       item: item,
       qty: qty,
@@ -146,6 +139,8 @@ const update = async (req, res) => {
       productId: orderToUpdate.item._id,
     });
 
+    order.customerId = newCustomer._id;
+
     await sendOrderConfirmEmail({
       customerEmail: orderToUpdate.email,
       customerName: orderToUpdate.firstName,
@@ -217,8 +212,6 @@ const getShippingLabel = async (req, res) => {
       payment_method: user.paymentMethod.id,
       confirm: true,
     });
-
-    console.log(labelPaymentIntent);
 
     if (labelPaymentIntent.status === 'succeeded') {
       const labelAndTracking = await genShippingLabel({ rateId: rateId });
