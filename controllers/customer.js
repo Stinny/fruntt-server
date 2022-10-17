@@ -19,9 +19,9 @@ const getSingleCustomer = async (req, res) => {
 
   try {
     const customer = await Customer.findById(customerId);
-    // const order = await Order.findById(customer?.orderId);
+    const order = await Order.findById(customer?.orderId);
 
-    return res.json(customer);
+    return res.json({ customer: customer, order: order });
   } catch (err) {
     return res.status(500).json('Server error');
   }
