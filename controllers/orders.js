@@ -139,7 +139,7 @@ const update = async (req, res) => {
       productId: orderToUpdate.item._id,
     });
 
-    order.customerId = newCustomer._id;
+    orderToUpdate.customerId = newCustomer._id;
 
     await sendOrderConfirmEmail({
       customerEmail: orderToUpdate.email,
