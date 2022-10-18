@@ -14,7 +14,8 @@ const getAll = async (req, res) => {
   }
 };
 
-const getSingleCustomer = async (req, res) => {
+//gets the customer and order
+const getCustomerAndOrder = async (req, res) => {
   const customerId = req.params.customerId;
 
   try {
@@ -79,6 +80,6 @@ const sendReviewEmail = async (req, res) => {
 module.exports = {
   getAll,
   addReview,
-  getSingleCustomer,
+  getCustomerAndOrder,
   sendReviewEmail,
 };

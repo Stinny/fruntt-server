@@ -5,7 +5,7 @@ const setUser = require('../middleware/setUser');
 
 router.get('/', isTokenValid, setUser, customer.getAll);
 
-router.get('/singlecustomer/:customerId', customer.getSingleCustomer);
+router.get('/singlecustomer/:customerId', customer.getCustomerAndOrder);
 
 router.post('/sendreviewemail', customer.sendReviewEmail);
 

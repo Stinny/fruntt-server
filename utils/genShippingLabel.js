@@ -111,6 +111,20 @@ const trackOrderUsingLabelId = async (labelId) => {
   }
 };
 
+const trackOrderUsingNumber = async ({ carrierCode, trackingNumer }) => {
+  try {
+    const result = await shipEngine.trackUsingCarrierCodeAndTrackingNumber({
+      carrierCode: carrierCode,
+      trackingNumber: trackingNumer,
+    });
+
+    return result;
+  } catch (e) {
+    console.log('Error tracking shipment: ', e.message);
+    return '';
+  }
+};
+
 const getShippingRates = async ({
   address,
   country,
@@ -177,4 +191,5 @@ module.exports = {
   validateBusAddress,
   trackOrderUsingLabelId,
   getShippingRates,
+  trackOrderUsingNumber,
 };

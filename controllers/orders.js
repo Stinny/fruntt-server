@@ -6,6 +6,7 @@ const {
   genShippingLabel,
   trackOrderUsingLabelId,
   getShippingRates,
+  trackOrderUsingNumber,
 } = require('../utils/genShippingLabel');
 const Product = require('../models/Product');
 const {
@@ -62,6 +63,7 @@ const create = async (req, res) => {
       transfer_data: {
         destination: storeFrontOwner.stripeId,
       },
+      description: 'Fruntt - order payment',
     });
 
     const newOrder = new Order({
@@ -80,7 +82,29 @@ const create = async (req, res) => {
   }
 };
 
-//upodates an order
+//updates the paymentIntent on the order
+const updateOrderAmount = async (req, res) => {
+  const { orderId, total } = req.body;
+
+  try {
+    const order = await Order.findById(orderId);
+
+    const finalAmount = Number(
+      ((total + order.item.shippingPrice) * 100).toFixed(2)
+    );
+
+    //update paymentIntent attached to order
+    const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
+      amount: finalAmount,
+    });
+
+    return res.json('Amount updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+//upodates an order with final data
 const update = async (req, res) => {
   const orderId = req.params.orderId;
   const {
@@ -114,14 +138,6 @@ const update = async (req, res) => {
     orderToUpdate.paid = true;
 
     updateItem.stock -= 1;
-
-    //update paymentIntent attached to order
-    const paymentIntent = await stripe.paymentIntents.update(
-      orderToUpdate.paymentId,
-      {
-        amount: total * 100,
-      }
-    );
 
     const newCustomer = new Customer({
       firstName: firstName,
@@ -165,7 +181,9 @@ const update = async (req, res) => {
 
 const markOrderAsFulfilled = async (req, res) => {
   const orderId = req.params.orderId;
-  const { trackingNum, fulfillType } = req.body;
+  const { trackingNum, fulfillType, carrierCode } = req.body;
+
+  let trackingUrl;
 
   try {
     const order = await Order.findById(orderId);
@@ -177,7 +195,18 @@ const markOrderAsFulfilled = async (req, res) => {
     if (fulfillType === 'manu') {
       order.trackingNumber = trackingNum;
       order.manualTrackingNumber = true;
+      trackingUrl = await trackOrderUsingNumber({
+        carrierCode: carrierCode,
+        trackingNumer: trackingNumber,
+      });
+    } else if (fulfillType === 'auto') {
+      trackingUrl = await trackOrderUsingNumber({
+        carrierCode: 'ups',
+        trackingNumer: order.trackingNumber,
+      });
     }
+
+    console.log(trackingUrl);
 
     await sendOrderFulfilledEmail({
       customerEmail: order?.email,
@@ -199,8 +228,6 @@ const markOrderAsFulfilled = async (req, res) => {
 const getShippingLabel = async (req, res) => {
   const { orderId, rateId, amount } = req.body;
 
-  console.log(req.body);
-
   try {
     const order = await Order.findById(orderId);
     const user = await User.findById(req.user.id);
@@ -211,6 +238,7 @@ const getShippingLabel = async (req, res) => {
       customer: user.customerId,
       payment_method: user.paymentMethod.id,
       confirm: true,
+      description: 'Shipping label purschase',
     });
 
     if (labelPaymentIntent.status === 'succeeded') {
@@ -325,4 +353,5 @@ module.exports = {
   getOrderStatus,
   getRates,
   getShippingLabel,
+  updateOrderAmount,
 };

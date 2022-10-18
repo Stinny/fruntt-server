@@ -22,28 +22,31 @@ const getStoreProducts = async (req, res) => {
 
   try {
     const reviews = [];
-    const product = await Product.find({ storeId: storeId }); //returns an array
-    const item = product[0]; //first item in the returned array from line above
+    const productArr = await Product.find({ storeId: storeId }); //returns an array
 
-    const customers = await Customer.find({
-      productId: item._id,
-      reviewed: true,
-    });
-
-    for (var i = 0; i < customers.length; i++) {
-      totalRating += customers[i].rating;
-      reviews.push({
-        review: customers[i].review,
-        rating: customers[i].rating,
-        customerName: `${customers[i].firstName} ${customers[i].lastName}`,
-        reviewedOn: customers[i].reviewedOn,
+    if (productArr.length > 0) {
+      const customers = await Customer.find({
+        productId: productArr[0]._id,
+        reviewed: true,
       });
+
+      for (var i = 0; i < customers.length; i++) {
+        totalRating += customers[i].rating;
+        reviews.push({
+          review: customers[i].review,
+          rating: customers[i].rating,
+          customerName: `${customers[i].firstName} ${customers[i].lastName}`,
+          reviewedOn: customers[i].reviewedOn,
+        });
+      }
+
+      totalRating / customers.length;
     }
 
     return res.json({
-      item: item,
+      item: productArr.length > 0 ? productArr[0] : {},
       reviews: reviews,
-      totalRating: totalRating / customers.length,
+      totalRating: totalRating,
     });
   } catch (err) {
     return res.status(500).json('Server error');
@@ -80,6 +83,7 @@ const create = async (req, res) => {
     country,
     zip,
     options,
+    shippingPrice,
   } = req.body;
 
   //try to validate address
@@ -103,6 +107,7 @@ const create = async (req, res) => {
       state: state,
       zipcode: zip,
     },
+    shippingPrice: shippingPrice,
   });
 
   //push images data to newProduct doc
@@ -148,6 +153,7 @@ const update = async (req, res) => {
     city,
     zipcode,
     options,
+    shippingPrice,
     imageData,
   } = req.body;
 
@@ -161,7 +167,7 @@ const update = async (req, res) => {
       state,
       zip: zipcode,
     });
-    console.log(validAddress);
+    console.log(shippingPrice);
     if (validAddress === 'Invalid address') return res.json('Invalid address');
 
     //make updates
@@ -177,6 +183,7 @@ const update = async (req, res) => {
     productToUpdate.shipsFrom.state = state;
     productToUpdate.shipsFrom.city = city;
     productToUpdate.shipsFrom.zipcode = zipcode;
+    productToUpdate.shippingPrice = shippingPrice;
 
     //push image data to doc
     if (imageData.length) {
