@@ -22,7 +22,10 @@ const getStoreProducts = async (req, res) => {
 
   try {
     const reviews = [];
-    const productArr = await Product.find({ storeId: storeId }); //returns an array
+    const productArr = await Product.find({
+      storeId: storeId,
+      published: true,
+    }); //returns an array
 
     if (productArr.length > 0) {
       const customers = await Customer.find({
