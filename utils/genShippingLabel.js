@@ -179,6 +179,8 @@ const getShippingRates = async ({
   try {
     const result = await shipEngine.getRatesWithShipmentDetails(params);
 
+    console.log(result);
+
     return result.rateResponse;
   } catch (e) {
     console.log('Error creating rates: ', e.message);
