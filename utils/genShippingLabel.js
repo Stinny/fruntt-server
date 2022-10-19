@@ -99,18 +99,6 @@ const validateBusAddress = async ({ address, city, state, zip }) => {
   }
 };
 
-const trackOrderUsingLabelId = async (labelId) => {
-  try {
-    const result = await shipEngine.trackUsingLabelId(labelId);
-    console.log(result);
-
-    return result;
-  } catch (e) {
-    console.log('Error tracking shipment: ', e.message);
-    return '';
-  }
-};
-
 const trackOrderUsingNumber = async ({ carrierCode, trackingNumer }) => {
   try {
     const result = await shipEngine.trackUsingCarrierCodeAndTrackingNumber({
@@ -191,7 +179,6 @@ module.exports = {
   genShippingLabel,
   validateResAddress,
   validateBusAddress,
-  trackOrderUsingLabelId,
   getShippingRates,
   trackOrderUsingNumber,
 };

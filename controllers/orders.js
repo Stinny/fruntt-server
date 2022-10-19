@@ -4,7 +4,6 @@ const Customer = require('../models/Customer');
 const User = require('../models/User');
 const {
   genShippingLabel,
-  trackOrderUsingLabelId,
   getShippingRates,
   trackOrderUsingNumber,
 } = require('../utils/genShippingLabel');
@@ -232,29 +231,36 @@ const getShippingLabel = async (req, res) => {
     const order = await Order.findById(orderId);
     const user = await User.findById(req.user.id);
 
-    const labelPaymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100,
-      currency: 'usd',
-      customer: user.customerId,
-      payment_method: user.paymentMethod.id,
-      confirm: true,
-      description: 'Shipping label purschase',
-    });
+    if (user?.paymentMethod?.id) {
+      const labelPaymentIntent = await stripe.paymentIntents.create({
+        amount: amount * 100,
+        currency: 'usd',
+        customer: user.customerId,
+        payment_method: user.paymentMethod.id,
+        confirm: true,
+        description: 'Shipping label purschase',
+      });
 
-    if (labelPaymentIntent.status === 'succeeded') {
-      const labelAndTracking = await genShippingLabel({ rateId: rateId });
+      if (labelPaymentIntent.status === 'succeeded') {
+        const labelAndTracking = await genShippingLabel({ rateId: rateId });
 
-      order.labelId = labelAndTracking.labelId;
-      order.trackingNumber = labelAndTracking.trackingNumber;
-      order.labelUrl = labelAndTracking.url;
+        order.labelId = labelAndTracking.labelId;
+        order.trackingNumber = labelAndTracking.trackingNumber;
+        order.labelUrl = labelAndTracking.url;
 
-      await order.save();
+        await order.save();
 
-      return res.json({ error: false, msg: 'Label created' });
+        return res.json({ error: false, msg: 'Label created' });
+      } else {
+        return res.json({
+          error: true,
+          msg: 'There was an error with the payment on this account',
+        });
+      }
     } else {
       return res.json({
         error: true,
-        msg: 'There was an error with the payment',
+        msg: 'No payment method, add one in settings',
       });
     }
   } catch (err) {

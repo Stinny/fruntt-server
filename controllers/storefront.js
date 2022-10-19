@@ -3,6 +3,7 @@ const User = require('../models/User');
 const { deleteObjFromS3 } = require('../utils/uploadToS3');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Visit = require('../models/Visit');
 
 const getStorefront = async (req, res) => {
   try {
@@ -93,7 +94,13 @@ const editStyles = async (req, res) => {
     socialIcons,
     hideFooter,
     hideNav,
+    borders,
+    header,
+    reviewBackground,
+    faqBackground,
   } = req.body;
+
+  console.log(req.body);
 
   try {
     const storefrontToEdit = await Storefront.findById(storeId);
@@ -108,6 +115,12 @@ const editStyles = async (req, res) => {
     storefrontToEdit.style.socialIcons = socialIcons;
     storefrontToEdit.style.hideNav = hideNav;
     storefrontToEdit.style.hideFooter = hideFooter;
+    storefrontToEdit.style.borderColor = borders;
+    storefrontToEdit.style.headerColor = header;
+    storefrontToEdit.style.reviewBackground = reviewBackground;
+    storefrontToEdit.style.faqBackground = faqBackground;
+
+    storefrontToEdit.lastEdited = new Date();
 
     await storefrontToEdit.save();
     return res.json('Styles saved');
@@ -121,12 +134,15 @@ const editStyles = async (req, res) => {
 const addVisit = async (req, res) => {
   const { storeId } = req.body;
 
+  console.log(storeId);
+
   try {
-    const storefront = await Storefront.findById(storeId);
+    const newVisit = new Visit({
+      storeId: storeId,
+      visitedOn: new Date(),
+    });
 
-    storefront.visits += 1;
-
-    await storefront.save();
+    await newVisit.save();
 
     return res.json('Visit tracked');
   } catch (err) {
@@ -146,6 +162,7 @@ const getStoreStats = async (req, res) => {
     });
     const storefront = await Storefront.findById(req.params.storeId);
     const product = await Product.find({ storeId: req.params.storeId });
+    const visits = await Visit.find({ storeId: req.params.storeId });
 
     for (var x = 0; x < orders.length; x++) {
       revenue += orders[x].total;
@@ -158,7 +175,7 @@ const getStoreStats = async (req, res) => {
       revenue: revenue,
       numOfOrders: numOfOrders,
       numOfUnfulfilledOrders: numOfUnfulfilledOrders,
-      visits: storefront.visits,
+      visits: visits.length,
       conversion: (numOfOrders / storefront.visits) * 100,
       itemStock: product.length ? product[0].stock : 0,
     });
