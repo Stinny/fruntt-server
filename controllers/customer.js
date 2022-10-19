@@ -3,6 +3,7 @@ const Storefront = require('../models/Storefront');
 const User = require('../models/User');
 const { sendReviewLinkEmail } = require('../email/transactional');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 //gets all customers from a storeId
 const getAll = async (req, res) => {
@@ -72,6 +73,32 @@ const sendReviewEmail = async (req, res) => {
 
     return res.json('Email sent');
   } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const getReviews = async (req, res) => {
+  const storeId = req.params.storeId;
+
+  const reviews = [];
+  try {
+    const product = await Product.find({ storeId: storeId });
+    const customers = await Customer.find({
+      productId: product[0]._id,
+      reviewed: true,
+    });
+
+    for (var i = 0; i < customers.length; i++) {
+      reviews.push({
+        review: customers[i].review,
+        rating: customers[i].rating,
+        customerName: `${customers[i].firstName} ${customers[i].lastName}`,
+        reviewedOn: customers[i].reviewedOn,
+      });
+    }
+
+    return res.json({ item: product[0], reviews: reviews });
+  } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
   }
@@ -82,4 +109,5 @@ module.exports = {
   addReview,
   getCustomerAndOrder,
   sendReviewEmail,
+  getReviews,
 };

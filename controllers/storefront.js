@@ -100,8 +100,6 @@ const editStyles = async (req, res) => {
     faqBackground,
   } = req.body;
 
-  console.log(req.body);
-
   try {
     const storefrontToEdit = await Storefront.findById(storeId);
 

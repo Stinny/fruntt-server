@@ -11,4 +11,6 @@ router.post('/sendreviewemail', customer.sendReviewEmail);
 
 router.post('/addreview', customer.addReview);
 
+router.get('/reviews/:storeId', customer.getReviews);
+
 module.exports = router;
