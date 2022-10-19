@@ -14,6 +14,7 @@ const OrderSchema = new mongoose.Schema(
       street: { type: String },
       zipcode: { type: String },
     },
+    options: {},
     total: { type: Number },
     fulfilled: { type: Boolean, default: false },
     paid: { type: Boolean, default: false },

@@ -45,18 +45,17 @@ const getStoreOrders = async (req, res) => {
 //creates order
 const create = async (req, res) => {
   try {
-    const { total, storeId, item, qty } = req.body;
+    const { total, storeId, item, qty, options } = req.body;
 
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
 
-    const applicationFee = total * 0.02;
+    console.log(options);
 
     //need to get the stores stripe account ID and add to paymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,
       currency: 'usd',
-      application_fee_amount: applicationFee * 100,
       automatic_payment_methods: { enabled: true },
       on_behalf_of: storeFrontOwner.stripeId,
       transfer_data: {
@@ -71,6 +70,7 @@ const create = async (req, res) => {
       storeId: storeId,
       item: item,
       qty: qty,
+      options: options,
     });
 
     await newOrder.save();
@@ -92,13 +92,19 @@ const updateOrderAmount = async (req, res) => {
       ((total + order.item.shippingPrice) * 100).toFixed(2)
     );
 
+    const applicationFee = ((finalAmount / 100) * 0.02).toFixed(2) * 100;
+
+    console.log(applicationFee);
+
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
       amount: finalAmount,
+      application_fee_amount: applicationFee.toFixed(),
     });
 
     return res.json('Amount updated');
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
@@ -116,6 +122,7 @@ const update = async (req, res) => {
     zip,
     total,
     qty,
+    options,
   } = req.body;
 
   try {
@@ -135,6 +142,7 @@ const update = async (req, res) => {
     orderToUpdate.total = total + updateItem.shippingPrice;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.paid = true;
+    orderToUpdate.options = options;
 
     updateItem.stock -= 1;
 
