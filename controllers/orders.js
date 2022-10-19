@@ -132,7 +132,7 @@ const update = async (req, res) => {
     orderToUpdate.shippingAddress.zipcode = zip;
     orderToUpdate.shippingAddress.street = address;
     orderToUpdate.qty = qty;
-    orderToUpdate.total = total;
+    orderToUpdate.total = total + updateItem.shippingPrice;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.paid = true;
 
