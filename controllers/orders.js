@@ -71,6 +71,13 @@ const create = async (req, res) => {
       item: item,
       qty: qty,
       options: options,
+      shipsFrom: {
+        address: item.shipsFrom.address,
+        country: item.shipsFrom.country,
+        state: item.shipsFrom.state,
+        city: item.shipsFrom.city,
+        zipcode: item.shipsFrom.zipcode,
+      },
     });
 
     await newOrder.save();
@@ -137,7 +144,7 @@ const update = async (req, res) => {
     orderToUpdate.shippingAddress.city = city;
     orderToUpdate.shippingAddress.state = state;
     orderToUpdate.shippingAddress.zipcode = zip;
-    orderToUpdate.shippingAddress.street = address;
+    orderToUpdate.shippingAddress.address = address;
     orderToUpdate.qty = qty;
     orderToUpdate.total = total + updateItem.shippingPrice;
     orderToUpdate.placedOn = new Date();
@@ -296,6 +303,27 @@ const editShippingAddress = async (req, res) => {
   }
 };
 
+const editShipsFromAddress = async (req, res) => {
+  const { orderId, address, country, city, state, zipcode } = req.body;
+
+  try {
+    const order = await Order.findById(orderId);
+
+    order.shipsFrom.address = address;
+    order.shipsFrom.country = country;
+    order.shipsFrom.state = state;
+    order.shipsFrom.city = city;
+    order.shipsFrom.zipcode = zipcode;
+
+    await order.save();
+
+    return res.json('Address updated');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 const getOrderStatus = async (req, res) => {
   const orderId = req.params.orderId;
   let trackOrderReq;
@@ -323,20 +351,22 @@ const getRates = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
+    console.log(order);
+
     if (order.fulfilled || order.labelUrl) return res.json(rates);
 
     const rateResponse = await getShippingRates({
-      address: order.shippingAddress.street,
+      address: order.shippingAddress.address,
       country: order.shippingAddress.country,
       city: order.shippingAddress.city,
       state: order.shippingAddress.state,
       zip: order.shippingAddress.zipcode,
       weight: order.item.weight,
       unit: order.item.weightUnit,
-      fromAddress: order.item.shipsFrom.address,
-      fromCity: order.item.shipsFrom.city,
-      fromState: order.item.shipsFrom.state,
-      fromZip: order.item.shipsFrom.zipcode,
+      fromAddress: order.shipsFrom.address,
+      fromCity: order.shipsFrom.city,
+      fromState: order.shipsFrom.state,
+      fromZip: order.shipsFrom.zipcode,
     });
 
     const ratesArr = rateResponse.rates;
@@ -364,6 +394,7 @@ module.exports = {
   update,
   markOrderAsFulfilled,
   editShippingAddress,
+  editShipsFromAddress,
   getOrderStatus,
   getRates,
   getShippingLabel,

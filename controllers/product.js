@@ -89,50 +89,58 @@ const create = async (req, res) => {
     shippingPrice,
   } = req.body;
 
-  //try to validate address
-  const validAddress = await validateBusAddress({ address, city, state, zip });
-  if (validAddress === 'Invalid address') return res.json('Invalid address');
-
-  const newProduct = new Product({
-    title: title,
-    description: description,
-    price: price,
-    userId: req.user.id,
-    storeId: req.user.storeId,
-    stock: stock,
-    weightUnit: weightUnit,
-    weight: weight,
-    published: published,
-    shipsFrom: {
-      address: address,
-      country: country,
-      city: city,
-      state: state,
-      zipcode: zip,
-    },
-    shippingPrice: shippingPrice,
-  });
-
-  //push images data to newProduct doc
-  if (imageData.length) {
-    for (var i = 0; i < imageData.length; i++) {
-      newProduct.images.push({
-        url: imageData[i].url,
-        key: imageData[i].key,
-      });
-    }
-  }
-
-  //push the options data
-  if (options.length) {
-    for (var i = 0; i < options.length; i++) {
-      newProduct.options.push(options[i]);
-    }
-  }
-
   try {
-    const savedProduct = await newProduct.save();
-    return res.json(savedProduct);
+    //try to validate address
+    const validAddress = await validateBusAddress({
+      address,
+      city,
+      state,
+      zip,
+    });
+    console.log(validAddress);
+    if (validAddress === 'Valid address') {
+      const newProduct = new Product({
+        title: title,
+        description: description,
+        price: price,
+        userId: req.user.id,
+        storeId: req.user.storeId,
+        stock: stock,
+        weightUnit: weightUnit,
+        weight: weight,
+        published: published,
+        shipsFrom: {
+          address: address,
+          country: country,
+          city: city,
+          state: state,
+          zipcode: zip,
+        },
+        shippingPrice: shippingPrice,
+      });
+
+      //push images data to newProduct doc
+      if (imageData.length) {
+        for (var i = 0; i < imageData.length; i++) {
+          newProduct.images.push({
+            url: imageData[i].url,
+            key: imageData[i].key,
+          });
+        }
+      }
+
+      //push the options data
+      if (options.length) {
+        for (var i = 0; i < options.length; i++) {
+          newProduct.options.push(options[i]);
+        }
+      }
+
+      const savedProduct = await newProduct.save();
+      return res.json('Item added');
+    } else {
+      return res.json('Invalid address');
+    }
   } catch (err) {
     console.error(err);
     return res.status(500).json('Server Error');

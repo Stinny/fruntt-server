@@ -19,6 +19,8 @@ router.post('/fulfill/:orderId', orders.markOrderAsFulfilled);
 
 router.post('/shippingaddress', orders.editShippingAddress);
 
+router.post('/update/shipsfrom/', orders.editShipsFromAddress);
+
 router.get('/status/:orderId', orders.getOrderStatus);
 
 router.get('/rates/:orderId', orders.getRates);

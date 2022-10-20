@@ -158,6 +158,9 @@ const getOnboardUrl = async (req, res) => {
         individual: {
           phone: '000-000-0000',
         },
+        business_profile: {
+          url: storefront.url,
+        },
       });
       user.stripeId = stripeAcc.id;
       storefront.stripeId = stripeAcc.id;

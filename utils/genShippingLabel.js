@@ -94,7 +94,7 @@ const validateBusAddress = async ({ address, city, state, zip }) => {
       return 'Invalid address';
     }
   } catch (e) {
-    console.log('Error validating address: ', e.message);
+    console.log('Error validating address: ', e);
     return 'Invalid address';
   }
 };
@@ -166,8 +166,6 @@ const getShippingRates = async ({
 
   try {
     const result = await shipEngine.getRatesWithShipmentDetails(params);
-
-    console.log(result);
 
     return result.rateResponse;
   } catch (e) {
