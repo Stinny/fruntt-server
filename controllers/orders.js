@@ -289,7 +289,7 @@ const editShippingAddress = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
-    order.shippingAddress.street = address;
+    order.shippingAddress.address = address;
     order.shippingAddress.country = country;
     order.shippingAddress.city = city;
     order.shippingAddress.state = state;
@@ -305,6 +305,8 @@ const editShippingAddress = async (req, res) => {
 
 const editShipsFromAddress = async (req, res) => {
   const { orderId, address, country, city, state, zipcode } = req.body;
+
+  console.log(req.body);
 
   try {
     const order = await Order.findById(orderId);
@@ -350,8 +352,6 @@ const getRates = async (req, res) => {
 
   try {
     const order = await Order.findById(orderId);
-
-    console.log(order);
 
     if (order.fulfilled || order.labelUrl) return res.json(rates);
 

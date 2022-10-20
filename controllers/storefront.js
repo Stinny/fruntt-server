@@ -184,7 +184,7 @@ const getStoreStats = async (req, res) => {
       numOfOrders: numOfOrders,
       numOfUnfulfilledOrders: numOfUnfulfilledOrders,
       visits: visits.length,
-      conversion: (numOfOrders / storefront.visits) * 100,
+      conversion: (numOfOrders / visits.length) * 100,
       itemStock: product.length ? product[0].stock : 0,
     });
   } catch (err) {
