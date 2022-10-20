@@ -4,6 +4,7 @@ const { deleteObjFromS3 } = require('../utils/uploadToS3');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Visit = require('../models/Visit');
+const { updateSiteName } = require('../utils/netlifyApi');
 
 const getStorefront = async (req, res) => {
   try {
@@ -36,10 +37,17 @@ const addLogo = async (req, res) => {
       storefrontToEdit.logo.key = req.body.logoKey;
     }
     storefrontToEdit.name = req.body.name;
+    storefrontToEdit.url = `https://${req.body.name}.fruntt.com`;
+
+    await updateSiteName({
+      siteId: storefrontToEdit?.siteId,
+      storeName: req.body.name,
+    });
 
     await storefrontToEdit.save();
     return res.json('Logo added');
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
@@ -169,8 +177,10 @@ const getStoreStats = async (req, res) => {
       if (orders[x].fulfilled === false) numOfUnfulfilledOrders += 1;
     }
 
+    platformFee = revenue * 0.02;
+
     return res.json({
-      revenue: revenue,
+      revenue: revenue - platformFee,
       numOfOrders: numOfOrders,
       numOfUnfulfilledOrders: numOfUnfulfilledOrders,
       visits: visits.length,

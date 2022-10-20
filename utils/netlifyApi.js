@@ -47,4 +47,15 @@ const createSite = async (storeName, storeId) => {
   return site.data; //returning the response data
 };
 
-module.exports = { createSite };
+//creates site using netlify API
+const updateSiteName = async ({ storeName, siteId }) => {
+  const body = {
+    custom_domain: `${storeName}.fruntt.com`,
+  };
+
+  const site = await netlifyReq.patch(`/sites/${siteId}`, body); //request to netlify
+
+  return site.data; //returning the response data
+};
+
+module.exports = { createSite, updateSiteName };

@@ -268,7 +268,7 @@ const getShippingLabel = async (req, res) => {
     } else {
       return res.json({
         error: true,
-        msg: 'No payment method, add one in settings',
+        msg: 'You have no payment method added, add one in settings',
       });
     }
   } catch (err) {
