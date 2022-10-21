@@ -197,6 +197,8 @@ const markOrderAsFulfilled = async (req, res) => {
   const orderId = req.params.orderId;
   const { trackingNum, fulfillType, carrierCode } = req.body;
 
+  console.log(req.body);
+
   let trackingUrl;
 
   try {
@@ -211,7 +213,7 @@ const markOrderAsFulfilled = async (req, res) => {
       order.manualTrackingNumber = true;
       trackingUrl = await trackOrderUsingNumber({
         carrierCode: carrierCode,
-        trackingNumer: trackingNumber,
+        trackingNumer: trackingNum,
       });
     } else if (fulfillType === 'auto') {
       trackingUrl = await trackOrderUsingNumber({

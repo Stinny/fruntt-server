@@ -79,25 +79,35 @@ const sendReviewEmail = async (req, res) => {
 
 const getReviews = async (req, res) => {
   const storeId = req.params.storeId;
-
   const reviews = [];
+  let totalRating = 0;
+
   try {
     const product = await Product.find({ storeId: storeId });
-    const customers = await Customer.find({
-      productId: product[0]._id,
-      reviewed: true,
-    });
 
-    for (var i = 0; i < customers.length; i++) {
-      reviews.push({
-        review: customers[i].review,
-        rating: customers[i].rating,
-        customerName: `${customers[i].firstName} ${customers[i].lastName}`,
-        reviewedOn: customers[i].reviewedOn,
+    //if there is a product, then go ahead and get the customers/reviews
+    if (product.length) {
+      const customers = await Customer.find({
+        productId: product[0]._id,
+        reviewed: true,
       });
+
+      for (var i = 0; i < customers.length; i++) {
+        reviews.push({
+          review: customers[i].review,
+          rating: customers[i].rating,
+          customerName: `${customers[i].firstName} ${customers[i].lastName}`,
+          reviewedOn: customers[i].reviewedOn,
+        });
+        totalRating += customers[i].rating;
+      }
     }
 
-    return res.json({ item: product[0], reviews: reviews });
+    return res.json({
+      item: product.length ? product[0] : {},
+      reviews: reviews,
+      totalRating: totalRating / reviews.length,
+    });
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
