@@ -30,11 +30,11 @@ const handleStripeEvents = async (req, res) => {
 
           for (var i = 0; i < storefronts.length; i++) {
             storefronts[i].stripeOnboard = true;
-            await storefronts[i].save();
           }
 
           user.stripeOnboard = true;
           await user.save();
+          await storefronts.save();
         }
       } catch (err) {
         console.log(err.message);
