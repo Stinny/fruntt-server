@@ -12,7 +12,7 @@ const StorefrontSchema = new mongoose.Schema(
     style: {
       pageBackground: { type: String, default: '#ffffff' },
       navbarBackground: { type: String, default: '#ffffff' },
-      footerBackground: { type: String, default: '#ffffff' },
+      footerBackground: { type: String, default: '#f3f3f3' },
       pageText: { type: String, default: '#000000' },
       buttonColor: { type: String, default: '#000000' },
       buttonTextColor: { type: String, default: '#000000' },
