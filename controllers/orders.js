@@ -101,8 +101,6 @@ const updateOrderAmount = async (req, res) => {
 
     const applicationFee = ((finalAmount / 100) * 0.02).toFixed(2) * 100;
 
-    console.log(applicationFee);
-
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
       amount: finalAmount,
@@ -281,6 +279,7 @@ const getShippingLabel = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
