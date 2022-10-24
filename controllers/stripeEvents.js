@@ -26,15 +26,9 @@ const handleStripeEvents = async (req, res) => {
       try {
         if (account.charges_enabled) {
           const user = await User.findOne({ stripeId: account.id });
-          const storefronts = await Storefront.find({ userId: user._id });
-
-          for (var i = 0; i < storefronts.length; i++) {
-            storefronts[i].stripeOnboard = true;
-          }
 
           user.stripeOnboard = true;
           await user.save();
-          await storefronts.save();
         }
       } catch (err) {
         console.log(err.message);
