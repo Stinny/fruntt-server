@@ -104,7 +104,7 @@ const updateOrderAmount = async (req, res) => {
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
       amount: finalAmount,
-      application_fee_amount: applicationFee.toFixed(),
+      // application_fee_amount: applicationFee.toFixed(),
     });
 
     return res.json('Amount updated');

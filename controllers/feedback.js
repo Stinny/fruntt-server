@@ -1,7 +1,7 @@
 const Feedback = require('../models/Feedback');
 
 const createFeedback = async (req, res) => {
-  const { content, type } = req.body;
+  const { content, type, allowContact } = req.body;
 
   console.log(req.body);
 
@@ -10,6 +10,7 @@ const createFeedback = async (req, res) => {
       userId: req.user.id,
       content: content,
       type: type,
+      allowContact: allowContact,
     });
 
     await newFeedback.save();

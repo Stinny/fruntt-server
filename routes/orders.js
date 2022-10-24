@@ -15,11 +15,26 @@ router.put('/update/:orderId', orders.update);
 //gets single order
 router.get('/:orderId', orders.getOrder);
 
-router.post('/fulfill/:orderId', orders.markOrderAsFulfilled);
+router.post(
+  '/fulfill/:orderId',
+  isTokenValid,
+  setUser,
+  orders.markOrderAsFulfilled
+);
 
-router.post('/shippingaddress', orders.editShippingAddress);
+router.post(
+  '/shippingaddress',
+  isTokenValid,
+  setUser,
+  orders.editShippingAddress
+);
 
-router.post('/update/shipsfrom/', orders.editShipsFromAddress);
+router.post(
+  '/update/shipsfrom/',
+  isTokenValid,
+  setUser,
+  orders.editShipsFromAddress
+);
 
 router.get('/status/:orderId', orders.getOrderStatus);
 
@@ -27,6 +42,6 @@ router.get('/rates/:orderId', orders.getRates);
 
 router.post('/shippinglabel', isTokenValid, setUser, orders.getShippingLabel);
 
-router.post('/updateorderamount', orders.updateOrderAmount);
+router.post('/updateorderamount', isTokenValid, orders.updateOrderAmount);
 
 module.exports = router;
