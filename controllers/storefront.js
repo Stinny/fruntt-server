@@ -20,8 +20,14 @@ const getStorefrontById = async (req, res) => {
 
   try {
     const storefront = await Storefront.findById(storeId);
-    return res.json(storefront);
+    const storeOwner = await User.findById(storefront.userId);
+
+    return res.json({
+      storefront: storefront,
+      stripeOnboard: storeOwner.stripeOnboard,
+    });
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
