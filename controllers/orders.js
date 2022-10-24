@@ -246,9 +246,13 @@ const getShippingLabel = async (req, res) => {
     const order = await Order.findById(orderId);
     const user = await User.findById(req.user.id);
 
+    const finalAmount = Number((amount * 100).toFixed(2));
+
+    console.log(finalAmount);
+
     if (user?.paymentMethod?.id) {
       const labelPaymentIntent = await stripe.paymentIntents.create({
-        amount: amount * 100,
+        amount: finalAmount,
         currency: 'usd',
         customer: user.customerId,
         payment_method: user.paymentMethod.id,
@@ -279,7 +283,6 @@ const getShippingLabel = async (req, res) => {
       });
     }
   } catch (err) {
-    console.log(err);
     return res.status(500).json('Server error');
   }
 };
