@@ -1,10 +1,13 @@
 const stripe = require('stripe')(process.env.SK_TEST);
 const User = require('../models/User');
+const Storefront = require('../models/Storefront');
 
 const handleStripeEvents = async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
   let event = req.body;
+
+  res.send();
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -16,8 +19,6 @@ const handleStripeEvents = async (req, res) => {
     res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  res.send();
-
   const account = event.data.object;
 
   switch (event.type) {
@@ -25,6 +26,13 @@ const handleStripeEvents = async (req, res) => {
       try {
         if (account.charges_enabled) {
           const user = await User.findOne({ stripeId: account.id });
+          const storefronts = await Storefront.find({ userId: user._id });
+
+          for (var i = 0; i < storefronts.length; i++) {
+            storefronts[i].stripeOnboard = true;
+            await storefronts[i].save();
+          }
+
           user.stripeOnboard = true;
           await user.save();
         }

@@ -9,6 +9,7 @@ const StorefrontSchema = new mongoose.Schema(
     url: { type: String },
     visits: { type: Number, default: 0 },
     lastEdited: { type: Date },
+    stripeOnboard: { type: Boolean, default: false },
     style: {
       pageBackground: { type: String, default: '#ffffff' },
       navbarBackground: { type: String, default: '#ffffff' },
