@@ -111,6 +111,7 @@ const register = async (req, res) => {
       userInfo: { ...otherInfo, store: storeFront },
     });
   } catch (err) {
+    console.log(err);
     res.status(500).json(err);
   }
 };
