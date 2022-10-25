@@ -42,6 +42,6 @@ router.get('/rates/:orderId', orders.getRates);
 
 router.post('/shippinglabel', isTokenValid, setUser, orders.getShippingLabel);
 
-router.post('/updateorderamount', isTokenValid, orders.updateOrderAmount);
+router.post('/updateorderamount', orders.updateOrderAmount);
 
 module.exports = router;
