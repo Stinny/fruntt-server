@@ -7,8 +7,6 @@ const handleStripeEvents = async (req, res) => {
 
   let event = req.body;
 
-  res.send();
-
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -30,25 +28,18 @@ const handleStripeEvents = async (req, res) => {
           user.stripeOnboard = true;
           await user.save();
         }
+        break;
       } catch (err) {
         console.log(err.message);
         break;
       }
-      break;
-    case 'account.deleted':
-      try {
-        const user = await UserfindOne({ stripeId: account.id });
-        user.stripeOnboard = false;
-        await user.save();
-      } catch (err) {
-        console.log(err.message);
-        break;
-      }
-      break;
+
     default:
       console.log(`Unhandled event: ${event.type}`);
       break;
   }
+
+  res.send();
 };
 
 module.exports = { handleStripeEvents };
