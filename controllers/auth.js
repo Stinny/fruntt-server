@@ -67,7 +67,7 @@ const register = async (req, res) => {
 
     const subscription = await stripe.subscriptions.create({
       customer: stripeCustomer.id,
-      items: [{ price: 'price_1LG7E9Lhd2AdaEiSxzyYaW7m' }],
+      items: [{ price: 'price_1Lwc40Lhd2AdaEiSSD8gFA1U' }],
       trial_period_days: 14,
     });
 
