@@ -20,6 +20,8 @@ const getStoreProducts = async (req, res) => {
   const storeId = req.params.storeId;
   let totalRating = 0;
 
+  console.log(storeId);
+
   try {
     const reviews = [];
     const productArr = await Product.find({
