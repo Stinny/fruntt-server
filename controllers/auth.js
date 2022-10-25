@@ -156,9 +156,6 @@ const getOnboardUrl = async (req, res) => {
       const stripeAcc = await stripe.accounts.create({
         type: 'standard',
         business_type: 'individual',
-        individual: {
-          phone: '000-000-0000',
-        },
         business_profile: {
           url: storefront.url,
         },
