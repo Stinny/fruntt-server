@@ -97,7 +97,7 @@ const create = async (req, res) => {
       state,
       zip,
     });
-    console.log(validAddress);
+
     if (validAddress === 'Valid address') {
       const newProduct = new Product({
         title: title,
@@ -178,41 +178,43 @@ const update = async (req, res) => {
       state,
       zip: zipcode,
     });
-    console.log(shippingPrice);
-    if (validAddress === 'Invalid address') return res.json('Invalid address');
 
-    //make updates
-    productToUpdate.title = title;
-    productToUpdate.description = description;
-    productToUpdate.price = price;
-    productToUpdate.stock = stock;
-    productToUpdate.published = published;
-    productToUpdate.weightUnit = weightUnit;
-    productToUpdate.weight = weight;
-    productToUpdate.shipsFrom.address = address;
-    productToUpdate.shipsFrom.country = country;
-    productToUpdate.shipsFrom.state = state;
-    productToUpdate.shipsFrom.city = city;
-    productToUpdate.shipsFrom.zipcode = zipcode;
-    productToUpdate.shippingPrice = shippingPrice;
+    if (validAddress === 'Valid address') {
+      //make updates
+      productToUpdate.title = title;
+      productToUpdate.description = description;
+      productToUpdate.price = price;
+      productToUpdate.stock = stock;
+      productToUpdate.published = published;
+      productToUpdate.weightUnit = weightUnit;
+      productToUpdate.weight = weight;
+      productToUpdate.shipsFrom.address = address;
+      productToUpdate.shipsFrom.country = country;
+      productToUpdate.shipsFrom.state = state;
+      productToUpdate.shipsFrom.city = city;
+      productToUpdate.shipsFrom.zipcode = zipcode;
+      productToUpdate.shippingPrice = shippingPrice;
 
-    //push image data to doc
-    if (imageData.length) {
-      for (var i = 0; i < imageData.length; i++) {
-        productToUpdate.images.push({
-          url: imageData[i].url,
-          key: imageData[i].key,
-        });
+      //push image data to doc
+      if (imageData.length) {
+        for (var i = 0; i < imageData.length; i++) {
+          productToUpdate.images.push({
+            url: imageData[i].url,
+            key: imageData[i].key,
+          });
+        }
       }
+
+      //push options data to doc
+      productToUpdate.options = options;
+
+      //save the updates to the product doc
+      await productToUpdate.save();
+
+      res.status(200).json('Item updated');
+    } else {
+      res.json('Invalid address');
     }
-
-    //push options data to doc
-    productToUpdate.options = options;
-
-    //save the updates to the product doc
-    await productToUpdate.save();
-
-    res.status(200).json('Item updated');
   } catch (err) {
     console.log(err);
     res.status(500).json('Server Error');
