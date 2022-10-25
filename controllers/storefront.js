@@ -183,10 +183,8 @@ const getStoreStats = async (req, res) => {
       if (orders[x].fulfilled === false) numOfUnfulfilledOrders += 1;
     }
 
-    platformFee = revenue * 0.02;
-
     return res.json({
-      revenue: revenue - platformFee,
+      revenue: revenue,
       numOfOrders: numOfOrders,
       numOfUnfulfilledOrders: numOfUnfulfilledOrders,
       visits: visits.length,
