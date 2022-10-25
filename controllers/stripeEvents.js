@@ -39,7 +39,7 @@ const handleStripeEvents = async (req, res) => {
       break;
   }
 
-  res.send();
+  return res.send();
 };
 
 module.exports = { handleStripeEvents };
