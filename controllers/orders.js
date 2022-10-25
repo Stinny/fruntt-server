@@ -220,14 +220,13 @@ const markOrderAsFulfilled = async (req, res) => {
       });
     }
 
-    console.log(trackingUrl);
-
     await sendOrderFulfilledEmail({
       customerEmail: order?.email,
       customerName: order?.firstName,
       storeName: storefront?.name,
       storeUrl: storefront?.url,
       orderId: order._id,
+      trackingUrl: trackingUrl,
     });
 
     await order.save();

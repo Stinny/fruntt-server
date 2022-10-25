@@ -69,8 +69,8 @@ const sendOrderFulfilledEmail = async ({
   customerName,
   storeName,
   storeEmail,
-  storeUrl,
   orderId,
+  trackingUrl,
 }) => {
   await client.sendEmailWithTemplate({
     From: `${storeName}@fruntt.com`,
@@ -81,7 +81,7 @@ const sendOrderFulfilledEmail = async ({
       customerName: customerName,
       storeName: storeName,
       orderId: orderId,
-      storeUrl: storeUrl,
+      trackingUrl: trackingUrl,
     },
   });
 };
