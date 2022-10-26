@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Visit = require('../models/Visit');
 const { updateSiteName } = require('../utils/netlifyApi');
+const moment = require('moment');
 
 const getStorefront = async (req, res) => {
   try {
@@ -166,6 +167,7 @@ const getStoreStats = async (req, res) => {
   let revenue = 0;
   let numOfOrders = 0;
   let numOfUnfulfilledOrders = 0;
+  let dataSet = [];
 
   try {
     const orders = await Order.find({
@@ -179,6 +181,14 @@ const getStoreStats = async (req, res) => {
     for (var x = 0; x < orders.length; x++) {
       revenue += orders[x].total;
       numOfOrders += 1;
+      let daysTotal = 0;
+      let orderedOn = moment(orders[x].placedOn).format('MM/DD/YYYY');
+
+      for (var i = 0; i < orders.length; i++) {
+        if (orders[i].placedOn === orderedOn) daysTotal += orders[i].total;
+      }
+
+      dataSet.push({ date: orders[x].placedOn, daysTotal: daysTotal });
 
       if (orders[x].fulfilled === false) numOfUnfulfilledOrders += 1;
     }
@@ -190,6 +200,7 @@ const getStoreStats = async (req, res) => {
       visits: visits.length,
       conversion: (numOfOrders / visits.length) * 100,
       itemStock: product.length ? product[0].stock : 0,
+      dataSet: dataSet,
     });
   } catch (err) {
     console.log(err);
