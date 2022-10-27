@@ -1,4 +1,5 @@
 const Feedback = require('../models/Feedback');
+const EmailSignup = require('../models/EmailSignup');
 
 const createFeedback = async (req, res) => {
   const { content, type, allowContact } = req.body;
@@ -20,4 +21,21 @@ const createFeedback = async (req, res) => {
   }
 };
 
-module.exports = { createFeedback };
+const emailSignup = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const newSignup = new EmailSignup({
+      email: email,
+      signedUpOn: new Date(),
+    });
+
+    await newSignup.save();
+
+    return res.json('Signed up');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+module.exports = { createFeedback, emailSignup };

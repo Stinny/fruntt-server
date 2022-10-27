@@ -5,4 +5,6 @@ const setUser = require('../middleware/setUser');
 
 router.post('/add', isTokenValid, setUser, feedback.createFeedback);
 
+router.post('/emailsignup', feedback.emailSignup);
+
 module.exports = router;
