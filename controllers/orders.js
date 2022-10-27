@@ -50,11 +50,11 @@ const create = async (req, res) => {
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
 
-    console.log(options);
+    const amount = Number((total * 100).toFixed(2));
 
     //need to get the stores stripe account ID and add to paymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: total * 100,
+      amount: amount,
       currency: 'usd',
       automatic_payment_methods: { enabled: true },
       on_behalf_of: storeFrontOwner.stripeId,
@@ -246,8 +246,6 @@ const getShippingLabel = async (req, res) => {
     const user = await User.findById(req.user.id);
 
     const finalAmount = Number((amount * 100).toFixed(2));
-
-    console.log(finalAmount);
 
     if (user?.paymentMethod?.id) {
       const labelPaymentIntent = await stripe.paymentIntents.create({
