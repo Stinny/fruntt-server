@@ -1,8 +1,7 @@
-const CryptoJS = require('crypto-js');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
-const stripe = require('stripe')(process.env.SK_LIVE);
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 const { createSite } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
 const { sendSignupEmail } = require('../email/transactional');

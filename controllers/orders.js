@@ -12,7 +12,7 @@ const {
   sendOrderConfirmEmail,
   sendOrderFulfilledEmail,
 } = require('../email/transactional');
-const stripe = require('stripe')(process.env.SK_LIVE);
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 //gets a single order
 const getOrder = async (req, res) => {

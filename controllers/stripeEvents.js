@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.SK_TEST);
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
 
