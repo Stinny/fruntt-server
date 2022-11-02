@@ -307,8 +307,6 @@ const editShippingAddress = async (req, res) => {
 const editShipsFromAddress = async (req, res) => {
   const { orderId, address, country, city, state, zipcode } = req.body;
 
-  console.log(req.body);
-
   try {
     const order = await Order.findById(orderId);
 

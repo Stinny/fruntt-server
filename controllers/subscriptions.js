@@ -1,9 +1,6 @@
 const stripe = require('stripe')(process.env.SK_TEST);
 const User = require('../models/User');
 
-const freePriceId = 'price_1LIIb3Lhd2AdaEiSOq7MXooU'; //from stripe dashboard
-const paidPriceId = 'prod_Ly3KSlLMWnyzTd'; //from the stripe dashboard
-
 const updateSubscription = async (req, res) => {
   try {
   } catch (err) {
