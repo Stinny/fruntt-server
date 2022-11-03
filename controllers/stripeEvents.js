@@ -9,7 +9,7 @@ const handleStripeEvents = async (req, res) => {
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.rawBody.toString(),
+      req.body,
       sig,
       process.env.WEB_HOOK_SEC
     );
