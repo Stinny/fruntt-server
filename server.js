@@ -4,7 +4,15 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connectToDB = require('./config/db');
 
-server.use(express.json());
+server.use(
+  express.json({
+    limit: '5mb',
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString();
+    },
+  })
+);
+
 server.use(cookieParser());
 
 server.use(
