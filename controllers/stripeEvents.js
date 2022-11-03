@@ -18,7 +18,7 @@ const handleStripeEvents = async (req, res) => {
     res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  switch (event.type) {
+  switch (event?.type) {
     case 'account.updated':
       const account = event.data.object;
       try {
