@@ -5,11 +5,11 @@ const Storefront = require('../models/Storefront');
 const handleStripeEvents = async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
-  let event = req.body;
+  let event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
+      req.rawBody.toString(),
       sig,
       process.env.WEB_HOOK_SEC
     );
