@@ -6,7 +6,6 @@ const connectToDB = require('./config/db');
 
 server.use(
   express.json({
-    limit: '5mb',
     verify: (req, res, buf) => {
       req.rawBody = buf.toString();
     },
