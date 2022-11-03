@@ -9,8 +9,8 @@ const handleStripeEvents = async (req, res) => {
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
+      req.rawBody,
+      sig?.toString(),
       process.env.WEB_HOOK_SEC
     );
     const account = event.data.object;
