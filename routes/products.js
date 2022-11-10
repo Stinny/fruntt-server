@@ -20,6 +20,9 @@ router.get('/:productId', product.getProduct);
 //creates product
 router.post('/create', isTokenValid, setUser, product.create);
 
+//creates an ali product
+router.post('/create/ali', isTokenValid, setUser, product.createAliProduct);
+
 router.post('/addfaq', isTokenValid, setUser, product.addFAQ);
 
 router.post('/deletefaq', isTokenValid, setUser, product.deleteFAQ);
@@ -31,6 +34,15 @@ router.post(
   setUser,
   isProductOwner,
   product.update
+);
+
+//updates ali product
+router.post(
+  '/edit/ali/:productId',
+  isTokenValid,
+  setUser,
+  isProductOwner,
+  product.updateAli
 );
 
 //deletes product

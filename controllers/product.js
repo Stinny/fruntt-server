@@ -89,6 +89,8 @@ const create = async (req, res) => {
     shippingPrice,
   } = req.body;
 
+  console.log(req.body);
+
   try {
     //try to validate address
     const validAddress = await validateBusAddress({
@@ -141,6 +143,76 @@ const create = async (req, res) => {
     } else {
       return res.json('Invalid address');
     }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json('Server Error');
+  }
+};
+
+//creates a product from Aliexpress product data
+//recieves data {title, desc, price, etc.} and image upload data
+const createAliProduct = async (req, res) => {
+  const {
+    title,
+    description,
+    productPrice,
+    shippingFrom,
+    shippingTo,
+    prodReviews,
+    images,
+    totalRating,
+    stock,
+    published,
+    numOfSales,
+    itemUrl,
+    options,
+    freeShipping,
+  } = req.body;
+
+  try {
+    const newProduct = new Product({
+      title: title,
+      description: description,
+      price: productPrice,
+      userId: req.user.id,
+      storeId: req.user.storeId,
+      stock: stock,
+      published: published,
+      aliShipsFrom: shippingFrom,
+      aliShipsTo: shippingTo,
+      aliRating: totalRating,
+      freeShipping: freeShipping,
+      numberOfSales: numOfSales,
+      aliUrl: itemUrl,
+      ali: true,
+    });
+
+    //push images data to newProduct doc
+    if (images.length) {
+      for (var i = 0; i < images.length; i++) {
+        newProduct.aliImages.push(images[i]);
+      }
+    }
+
+    //push the options data
+    if (options.length) {
+      for (var i = 0; i < options.length; i++) {
+        newProduct.options.push(options[i]);
+      }
+    }
+
+    if (prodReviews.length) {
+      for (var i = 0; i < prodReviews.length; i++) {
+        newProduct.aliReviews.push({
+          date: prodReviews[i].reviewDate,
+          rating: prodReviews[i].review.reviewStarts,
+          content: prodReviews[i].review.reviewContent,
+        });
+      }
+    }
+
+    const savedProduct = await newProduct.save();
+    return res.json('Item added');
   } catch (err) {
     console.error(err);
     return res.status(500).json('Server Error');
@@ -215,6 +287,42 @@ const update = async (req, res) => {
     } else {
       res.json('Invalid address');
     }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json('Server Error');
+  }
+};
+
+//updates single product
+const updateAli = async (req, res) => {
+  console.log(req.body);
+  const productId = req.params.productId;
+  const {
+    title,
+    description,
+    price,
+    stock,
+    published,
+    shippingPrice,
+    freeShipping,
+  } = req.body;
+
+  try {
+    const productToUpdate = await Product.findById(productId);
+
+    //make updates
+    productToUpdate.title = title;
+    productToUpdate.description = description;
+    productToUpdate.price = price;
+    productToUpdate.stock = stock;
+    productToUpdate.published = published;
+    productToUpdate.shippingPrice = shippingPrice;
+    productToUpdate.freeShipping = freeShipping;
+
+    //save the updates to the product doc
+    await productToUpdate.save();
+
+    res.status(200).json('Item updated');
   } catch (err) {
     console.log(err);
     res.status(500).json('Server Error');
@@ -316,7 +424,9 @@ module.exports = {
   getStoreProducts,
   getProduct,
   create,
+  createAliProduct,
   update,
+  updateAli,
   remove,
   imageUpload,
   imageDelete,
