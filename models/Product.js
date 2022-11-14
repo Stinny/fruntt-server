@@ -21,6 +21,7 @@ const ProductSchema = new mongoose.Schema(
     aliImages: [],
     aliRating: { type: Number },
     aliUrl: { type: String },
+    aliEstimatedDelivery: { type: Date },
     aliReviews: [
       {
         date: { type: Date },
@@ -28,7 +29,6 @@ const ProductSchema = new mongoose.Schema(
         content: { type: String },
       },
     ],
-    freeShipping: { type: Boolean, default: false },
     shipsFrom: {
       address: { type: String },
       country: { type: String },

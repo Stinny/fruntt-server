@@ -166,8 +166,11 @@ const createAliProduct = async (req, res) => {
     numOfSales,
     itemUrl,
     options,
-    freeShipping,
+    shippingPrice,
+    estimatedDelivery,
   } = req.body;
+
+  console.log(req.body);
 
   try {
     const newProduct = new Product({
@@ -181,9 +184,10 @@ const createAliProduct = async (req, res) => {
       aliShipsFrom: shippingFrom,
       aliShipsTo: shippingTo,
       aliRating: totalRating,
-      freeShipping: freeShipping,
       numberOfSales: numOfSales,
       aliUrl: itemUrl,
+      shippingPrice: shippingPrice,
+      aliEstimatedDelivery: estimatedDelivery,
       ali: true,
     });
 
@@ -203,8 +207,9 @@ const createAliProduct = async (req, res) => {
 
     if (prodReviews.length) {
       for (var i = 0; i < prodReviews.length; i++) {
+        console.log(prodReviews[i].review);
         newProduct.aliReviews.push({
-          date: prodReviews[i].reviewDate,
+          date: prodReviews[i].review.reviewDate,
           rating: prodReviews[i].review.reviewStarts,
           content: prodReviews[i].review.reviewContent,
         });
@@ -304,7 +309,7 @@ const updateAli = async (req, res) => {
     stock,
     published,
     shippingPrice,
-    freeShipping,
+    estimatedDelivery,
   } = req.body;
 
   try {
@@ -317,7 +322,7 @@ const updateAli = async (req, res) => {
     productToUpdate.stock = stock;
     productToUpdate.published = published;
     productToUpdate.shippingPrice = shippingPrice;
-    productToUpdate.freeShipping = freeShipping;
+    productToUpdate.aliEstimatedDelivery = estimatedDelivery;
 
     //save the updates to the product doc
     await productToUpdate.save();

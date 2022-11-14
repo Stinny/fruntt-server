@@ -71,14 +71,15 @@ const create = async (req, res) => {
       item: item,
       qty: qty,
       options: options,
-      shipsFrom: {
-        address: item.shipsFrom.address,
-        country: item.shipsFrom.country,
-        state: item.shipsFrom.state,
-        city: item.shipsFrom.city,
-        zipcode: item.shipsFrom.zipcode,
-      },
     });
+
+    if (!item.ali) {
+      newOrder.shipsFrom.address = item.shipsFrom.address;
+      newOrder.shipsFrom.country = item.shipsFrom.country;
+      newOrder.shipsFrom.state = item.shipsFrom.state;
+      newOrder.shipsFrom.city = item.shipsFrom.city;
+      newOrder.shipsFrom.zipcode = item.shipsFrom.zipcode;
+    }
 
     await newOrder.save();
 
@@ -352,7 +353,8 @@ const getRates = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
-    if (order.fulfilled || order.labelUrl) return res.json(rates);
+    if (order.fulfilled || order.labelUrl || order.item.ali)
+      return res.json(rates);
 
     const rateResponse = await getShippingRates({
       address: order.shippingAddress.address,
