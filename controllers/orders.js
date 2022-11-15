@@ -330,8 +330,6 @@ const getOrderStatus = async (req, res) => {
   const orderId = req.params.orderId;
   let trackOrderReq;
 
-  console.log(orderId);
-
   try {
     const order = await Order.findById(orderId);
 

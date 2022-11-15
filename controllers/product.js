@@ -89,8 +89,6 @@ const create = async (req, res) => {
     shippingPrice,
   } = req.body;
 
-  console.log(req.body);
-
   try {
     //try to validate address
     const validAddress = await validateBusAddress({
@@ -169,8 +167,6 @@ const createAliProduct = async (req, res) => {
     shippingPrice,
     estimatedDelivery,
   } = req.body;
-
-  console.log(req.body);
 
   try {
     const newProduct = new Product({
