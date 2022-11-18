@@ -25,6 +25,18 @@ const UserSchema = new mongoose.Schema(
       brand: { type: String },
       lastFour: { type: String },
     },
+    sellerProfile: {
+      bio: { type: String, default: '' },
+      facebook: { type: String, default: '' },
+      youtube: { type: String, default: '' },
+      instagram: { type: String, default: '' },
+      twitter: { type: String, default: '' },
+      tiktok: { type: String, default: '' },
+      picture: {
+        url: { type: String },
+        key: { type: String },
+      },
+    },
     business: {
       name: { type: String },
       address: { type: String },

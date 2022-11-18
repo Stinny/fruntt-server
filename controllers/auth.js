@@ -73,12 +73,19 @@ const register = async (req, res) => {
     //create the new user mongo doc
     const newUser = new User({
       email: req.body.email,
-      firstName: '',
-      lastName: '',
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       password: hash,
       customerId: stripeCustomer.id,
       subscriptionId: subscription.id,
       trial: true,
+      sellerProfile: {
+        bio: req.body.bio,
+        picture: {
+          url: req.body.profilePicUrl,
+          key: req.body.profilePicKey,
+        },
+      },
     });
 
     //create the new storefront mongo doc
@@ -199,11 +206,10 @@ const disconnectStripe = async (req, res) => {
 
 const updateAccountInfo = async (req, res) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { email } = req.body;
 
     const userToUpdate = await User.findById(req.user.id);
-    userToUpdate.firstName = firstName;
-    userToUpdate.lastName = lastName;
+
     userToUpdate.email = email;
 
     await userToUpdate.save();
@@ -213,24 +219,61 @@ const updateAccountInfo = async (req, res) => {
   }
 };
 
-const updateBusinessInfo = async (req, res) => {
+const updateSellerProfile = async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    bio,
+    facebook,
+    youtube,
+    twitter,
+    instagram,
+    tiktok,
+    profilePicUrl,
+    profilePicKey,
+  } = req.body;
+
   try {
-    const { name, address, country, state, city, zip } = req.body;
+    const user = await User.findById(req.user.id);
 
-    const userToUpdate = await User.findById(req.user.id);
-    userToUpdate.business.name = name;
-    userToUpdate.business.address = address;
-    userToUpdate.business.country = country;
-    userToUpdate.business.state = state;
-    userToUpdate.business.city = city;
-    userToUpdate.business.zipCode = zip;
+    user.sellerProfile.bio = bio;
+    user.sellerProfile.facebook = facebook;
+    user.sellerProfile.instagram = instagram;
+    user.sellerProfile.youtube = youtube;
+    user.sellerProfile.twitter = twitter;
+    user.sellerProfile.tiktok = tiktok;
+    user.sellerProfile.picture.url = profilePicUrl;
+    user.sellerProfile.picture.key = profilePicKey;
+    user.firstName = firstName;
+    user.lastName = lastName;
 
-    await userToUpdate.save();
-    return res.json('User updated');
+    await user.save();
+
+    return res.json('Profile updated');
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
+
+// const updateBusinessInfo = async (req, res) => {
+//   try {
+//     const { name, address, country, state, city, zip } = req.body;
+
+//     const userToUpdate = await User.findById(req.user.id);
+//     userToUpdate.business.name = name;
+//     userToUpdate.business.address = address;
+//     userToUpdate.business.country = country;
+//     userToUpdate.business.state = state;
+//     userToUpdate.business.city = city;
+//     userToUpdate.business.zipCode = zip;
+
+//     await userToUpdate.save();
+//     return res.json('User updated');
+//   } catch (err) {
+//     return res.status(500).json('Server error');
+//   }
+// };
 
 const updateNotifications = async (req, res) => {
   try {
@@ -338,10 +381,10 @@ module.exports = {
   getOnboardUrl,
   disconnectStripe,
   updateAccountInfo,
-  updateBusinessInfo,
   updateNotifications,
   confirmEmail,
   getSetupIntent,
   addPaymentMethod,
   deletePaymentMethod,
+  updateSellerProfile,
 };

@@ -17,16 +17,16 @@ router.post(
   auth.updateAccountInfo
 );
 router.post(
-  '/updatebusinessinfo',
-  isTokenValid,
-  setUser,
-  auth.updateBusinessInfo
-);
-router.post(
   '/updatenotifications',
   isTokenValid,
   setUser,
   auth.updateNotifications
+);
+router.post(
+  '/updatesellerprofile',
+  isTokenValid,
+  setUser,
+  auth.updateSellerProfile
 );
 router.post('/confirmemail', isTokenValid, setUser, auth.confirmEmail);
 

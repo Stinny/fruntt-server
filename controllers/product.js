@@ -296,7 +296,6 @@ const update = async (req, res) => {
 
 //updates single product
 const updateAli = async (req, res) => {
-  console.log(req.body);
   const productId = req.params.productId;
   const {
     title,

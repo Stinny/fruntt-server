@@ -26,6 +26,17 @@ const getStorefrontById = async (req, res) => {
     return res.json({
       storefront: storefront,
       stripeOnboard: storeOwner.stripeOnboard,
+      sellerProfile: {
+        firstName: storeOwner.firstName,
+        lastName: storeOwner.lastName,
+        bio: storeOwner.sellerProfile.bio,
+        instagram: storeOwner.sellerProfile.instagram,
+        facebook: storeOwner.sellerProfile.facebook,
+        youtube: storeOwner.sellerProfile.youtube,
+        twitter: storeOwner.sellerProfile.twitter,
+        tikok: storeOwner.sellerProfile.tiktok,
+        profilePic: storeOwner.sellerProfile.picture.url,
+      },
     });
   } catch (err) {
     console.log(err);
