@@ -26,6 +26,7 @@ const UserSchema = new mongoose.Schema(
       lastFour: { type: String },
     },
     sellerProfile: {
+      numberOfSales: { type: Number, default: 0 },
       bio: { type: String, default: '' },
       facebook: { type: String, default: '' },
       youtube: { type: String, default: '' },

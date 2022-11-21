@@ -135,6 +135,7 @@ const update = async (req, res) => {
     const orderToUpdate = await Order.findById(orderId);
     const updateItem = await Product.findById(orderToUpdate.item._id);
     const storefront = await Storefront.findById(orderToUpdate.storeId);
+    const storefrontOwner = await User.findById(storefront.userId);
 
     orderToUpdate.firstName = firstName;
     orderToUpdate.lastName = lastName;
@@ -182,8 +183,12 @@ const update = async (req, res) => {
       storeName: storefront.name,
     });
 
+    storefrontOwner.sellerProfile.numberOfSales += 1;
+
     await newCustomer.save();
     await updateItem.save();
+    await storefrontOwner.save();
+
     const savedOrder = await orderToUpdate.save();
     return res.json({ msg: 'Order updated', order: savedOrder });
   } catch (err) {
