@@ -3,7 +3,7 @@ const router = require('express').Router();
 const isTokenValid = require('../middleware/verifyToken');
 const setUser = require('../middleware/setUser');
 
-router.get('/', isTokenValid, setUser, customer.getAll);
+router.get('/store/:storeId', isTokenValid, setUser, customer.getAll);
 
 router.get('/singlecustomer/:customerId', customer.getCustomerAndOrder);
 

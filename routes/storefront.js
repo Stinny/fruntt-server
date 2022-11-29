@@ -3,7 +3,7 @@ const storefront = require('../controllers/storefront');
 const setUser = require('../middleware/setUser');
 const isTokenValid = require('../middleware/verifyToken');
 
-router.get('/', isTokenValid, setUser, storefront.getStorefront);
+router.get('/store/:storeId', isTokenValid, setUser, storefront.getStorefront);
 
 router.get(
   '/storestats/:storeId',
@@ -16,6 +16,8 @@ router.get('/get/:storeId', storefront.getStorefrontById);
 
 router.post('/edit/:storeId', isTokenValid, setUser, storefront.editStyles);
 
+router.post('/delete/', isTokenValid, setUser, storefront.deleteStore);
+
 router.post('/addlogo/:storeId', isTokenValid, setUser, storefront.addLogo);
 
 router.post('/deletelogo', isTokenValid, setUser, storefront.deleteLogo);
@@ -23,5 +25,7 @@ router.post('/deletelogo', isTokenValid, setUser, storefront.deleteLogo);
 router.post('/addsocials', isTokenValid, setUser, storefront.addSocialLinks);
 
 router.post('/addvisit', storefront.addVisit);
+
+router.post('/addpage', isTokenValid, setUser, storefront.addStorefront);
 
 module.exports = router;

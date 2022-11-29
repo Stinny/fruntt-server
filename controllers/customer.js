@@ -8,7 +8,7 @@ const Product = require('../models/Product');
 //gets all customers from a storeId
 const getAll = async (req, res) => {
   try {
-    const customers = await Customer.find({ storeId: req.user.storeId });
+    const customers = await Customer.find({ storeId: req.params.storeId });
     return res.json(customers);
   } catch (err) {
     return res.status(500).json(err);

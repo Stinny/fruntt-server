@@ -10,7 +10,7 @@ const storage = multer.memoryStorage();
 const multipleUpload = multer({ storage: storage }).array('productImages');
 
 //gets all products
-router.get('/', isTokenValid, setUser, product.getAll);
+router.get('/client/:storeId', isTokenValid, setUser, product.getAll);
 
 router.get('/store/:storeId', product.getStoreProducts);
 

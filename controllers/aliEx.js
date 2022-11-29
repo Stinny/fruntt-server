@@ -28,8 +28,6 @@ const getProductFromAli = async (req, res) => {
     const productReq = await axios(itemOptions);
     const reviewsReq = await axios(reviewOptions);
 
-    // console.log(reviewsReq?.data?.result);
-
     if (productReq?.data?.result?.status?.data === 'success')
       return res.json({
         success: true,

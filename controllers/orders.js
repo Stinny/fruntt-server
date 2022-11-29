@@ -33,7 +33,7 @@ const getStoreOrders = async (req, res) => {
 
   try {
     const orders = await Order.find({
-      storeId: req.user.storeId,
+      storeId: storeId,
       paid: true,
     });
     return res.status(200).json(orders);

@@ -4,13 +4,17 @@ const { deleteObjFromS3 } = require('../utils/uploadToS3');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Visit = require('../models/Visit');
-const { updateSiteName } = require('../utils/netlifyApi');
 const moment = require('moment');
+const {
+  createSite,
+  deleteSite,
+  updateSiteName,
+} = require('../utils/netlifyApi');
 
 const getStorefront = async (req, res) => {
   try {
-    const storefront = await Storefront.find({ userId: req.user.id });
-    return res.json(storefront[0]);
+    const storefront = await Storefront.findById(req.params.storeId);
+    return res.json(storefront);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -22,6 +26,13 @@ const getStorefrontById = async (req, res) => {
   try {
     const storefront = await Storefront.findById(storeId);
     const storeOwner = await User.findById(storefront.userId);
+
+    const stores = await Storefront.find({ userId: storeOwner._id });
+
+    let storeIds = [];
+    for (var i = 0; i < stores.length; i++) {
+      storeIds.push({ id: stores[i]._id, url: stores[i].url });
+    }
 
     return res.json({
       storefront: storefront,
@@ -37,6 +48,7 @@ const getStorefrontById = async (req, res) => {
         tikok: storeOwner.sellerProfile.tiktok,
         profilePic: storeOwner.sellerProfile.picture.url,
       },
+      storeIds: storeIds,
     });
   } catch (err) {
     console.log(err);
@@ -158,8 +170,6 @@ const editStyles = async (req, res) => {
 const addVisit = async (req, res) => {
   const { storeId } = req.body;
 
-  console.log(storeId);
-
   try {
     const newVisit = new Visit({
       storeId: storeId,
@@ -219,6 +229,72 @@ const getStoreStats = async (req, res) => {
   }
 };
 
+const addStorefront = async (req, res) => {
+  const { pageName } = req.body;
+
+  try {
+    const storeExists = await Storefront.find({ name: pageName });
+
+    if (storeExists.length) return res.json('Already exists');
+    //create the new storefront mongo doc
+    const storeFront = new Storefront({
+      userId: req.user.id,
+      name: pageName,
+    });
+
+    const deployStore = await createSite(pageName, storeFront._id);
+
+    storeFront.url = deployStore.url;
+    storeFront.siteId = deployStore.id;
+
+    await storeFront.save();
+
+    const stores = await Storefront.find({ userId: req.user.id });
+
+    let storeIds = [];
+    for (var i = 0; i < stores.length; i++) {
+      storeIds.push({ id: stores[i]._id, url: stores[i].url });
+    }
+
+    return res.json({
+      msg: 'Page added',
+      storefront: storeFront,
+      storeIds: storeIds,
+    });
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const deleteStore = async (req, res) => {
+  const { storeId } = req.body;
+
+  try {
+    const storefront = await Storefront.findById(storeId);
+
+    const deleteProduct = await Product.deleteMany({ storeId: storefront._id });
+    const deletedStore = await deleteSite({ siteId: storefront.siteId });
+
+    const deleteStoreDoc = await Storefront.findByIdAndDelete(storeId);
+
+    const stores = await Storefront.find({ userId: req.user.id });
+
+    let storeIds = [];
+    for (var i = 0; i < stores.length; i++) {
+      storeIds.push({ id: stores[i]._id, url: stores[i].url });
+    }
+
+    return res.json({
+      msg: 'Page deleted',
+      storefront: stores[0],
+      storeIds: storeIds,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getStorefront,
   getStorefrontById,
@@ -228,4 +304,6 @@ module.exports = {
   addSocialLinks,
   addVisit,
   getStoreStats,
+  addStorefront,
+  deleteStore,
 };

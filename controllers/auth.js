@@ -21,6 +21,12 @@ const login = async (req, res) => {
       return res.status(400).json('Invalid credentials try again');
 
     const storeFront = await Storefront.findOne({ userId: user._id });
+    const stores = await Storefront.find({ userId: user._id });
+
+    let storeIds = [];
+    for (var i = 0; i < stores.length; i++) {
+      storeIds.push({ id: stores[i]._id, url: stores[i].url });
+    }
 
     const accessToken = user.genAccessToken();
     const refreshToken = user.genRefreshToken();
@@ -30,7 +36,7 @@ const login = async (req, res) => {
     return res.json({
       accessToken,
       refreshToken,
-      userInfo: { ...otherInfo, store: storeFront._doc },
+      userInfo: { ...otherInfo, store: storeFront._doc, storeIds: storeIds },
     });
   } catch (err) {
     res.status(500).json('Server error');
@@ -126,10 +132,15 @@ const updatedUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const { password, ...otherInfo } = user._doc;
-
     const storeFront = await Storefront.findOne({ userId: user._id });
+    const stores = await Storefront.find({ userId: user._id });
 
-    return res.json({ ...otherInfo, store: storeFront });
+    let storeIds = [];
+    for (var i = 0; i < stores.length; i++) {
+      storeIds.push({ id: stores[i]._id, url: stores[i].url });
+    }
+
+    return res.json({ ...otherInfo, store: storeFront, storeIds: storeIds });
   } catch (err) {
     return res.status(500).send('Server error');
   }

@@ -58,4 +58,10 @@ const updateSiteName = async ({ storeName, siteId }) => {
   return site.data; //returning the response data
 };
 
-module.exports = { createSite, updateSiteName };
+//deletes site
+const deleteSite = async ({ siteId }) => {
+  const site = await netlifyReq.delete(`/sites/${siteId}`);
+
+  return site.data;
+};
+module.exports = { createSite, updateSiteName, deleteSite };

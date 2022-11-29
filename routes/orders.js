@@ -4,7 +4,7 @@ const setUser = require('../middleware/setUser');
 const isTokenValid = require('../middleware/verifyToken');
 
 //gets all orders related to a certain store
-router.get('/store/', isTokenValid, setUser, orders.getStoreOrders);
+router.get('/store/:storeId', isTokenValid, setUser, orders.getStoreOrders);
 
 //creates an order
 router.post('/create', orders.create);

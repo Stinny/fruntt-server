@@ -6,8 +6,9 @@ const { validateBusAddress } = require('../utils/genShippingLabel');
 
 //gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
+  console.log(req.params.storeId);
   try {
-    const item = await Product.find({ storeId: req.user.storeId });
+    const item = await Product.find({ storeId: req.params.storeId });
 
     return res.json(item);
   } catch (err) {
@@ -87,6 +88,7 @@ const create = async (req, res) => {
     zip,
     options,
     shippingPrice,
+    storeId,
   } = req.body;
 
   try {
@@ -104,7 +106,7 @@ const create = async (req, res) => {
         description: description,
         price: price,
         userId: req.user.id,
-        storeId: req.user.storeId,
+        storeId: storeId,
         stock: stock,
         weightUnit: weightUnit,
         weight: weight,
@@ -166,6 +168,7 @@ const createAliProduct = async (req, res) => {
     options,
     shippingPrice,
     estimatedDelivery,
+    storeId,
   } = req.body;
 
   try {
@@ -174,7 +177,7 @@ const createAliProduct = async (req, res) => {
       description: description,
       price: productPrice,
       userId: req.user.id,
-      storeId: req.user.storeId,
+      storeId: storeId,
       stock: stock,
       published: published,
       aliShipsFrom: shippingFrom,
