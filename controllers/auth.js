@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
-const { createSite } = require('../utils/netlifyApi');
+const { createSite, deleteSite } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
 const { sendSignupEmail } = require('../email/transactional');
 
@@ -66,25 +66,12 @@ const register = async (req, res) => {
         error: 'Storefront name already in use',
       });
 
-    const stripeCustomer = await stripe.customers.create({
-      email: req.body.email,
-    });
-
-    const subscription = await stripe.subscriptions.create({
-      customer: stripeCustomer.id,
-      items: [{ price: 'price_1Lwc40Lhd2AdaEiSSD8gFA1U' }],
-      trial_period_days: 14,
-    });
-
     //create the new user mongo doc
     const newUser = new User({
       email: req.body.email,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       password: hash,
-      customerId: stripeCustomer.id,
-      subscriptionId: subscription.id,
-      trial: true,
       sellerProfile: {
         bio: req.body.bio,
         picture: {
@@ -93,6 +80,12 @@ const register = async (req, res) => {
         },
       },
     });
+
+    const stripeCustomer = await stripe.customers.create({
+      email: req.body.email,
+    });
+
+    newUser.customerId = stripeCustomer.id;
 
     //create the new storefront mongo doc
     const storeFront = new Storefront({
@@ -115,15 +108,26 @@ const register = async (req, res) => {
     //deconstructs the newUser doc so we don't return the password
     const { password, ...otherInfo } = newUser._doc;
 
+    let storeIds = [
+      {
+        id: storeFront._id,
+        url: storeFront.url,
+      },
+    ];
+
     await newUser.save();
     await storeFront.save();
     return res.json({
       accessToken,
       refreshToken,
-      userInfo: { ...otherInfo, store: storeFront },
+      userInfo: {
+        ...otherInfo,
+        store: storeFront,
+        storeIds: storeIds,
+      },
     });
   } catch (err) {
-    console.log(err);
+    console.log(err.data);
     res.status(500).json(err);
   }
 };
@@ -166,7 +170,6 @@ const getNewAccessToken = async (req, res) => {
 const getOnboardUrl = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const storefront = await Storefront.findById(req.user.storeId);
 
     if (!user.stripeId) {
       //creates stripe account
@@ -178,11 +181,9 @@ const getOnboardUrl = async (req, res) => {
         },
       });
       user.stripeId = stripeAcc.id;
-      storefront.stripeId = stripeAcc.id;
     }
 
     const savedUser = await user.save();
-    await storefront.save();
 
     // const stripeAcc = await stripe.accounts.retrieve(req.user.stripeId);
     const onboardUrl = await stripe.accountLinks.create({
@@ -267,25 +268,6 @@ const updateSellerProfile = async (req, res) => {
   }
 };
 
-// const updateBusinessInfo = async (req, res) => {
-//   try {
-//     const { name, address, country, state, city, zip } = req.body;
-
-//     const userToUpdate = await User.findById(req.user.id);
-//     userToUpdate.business.name = name;
-//     userToUpdate.business.address = address;
-//     userToUpdate.business.country = country;
-//     userToUpdate.business.state = state;
-//     userToUpdate.business.city = city;
-//     userToUpdate.business.zipCode = zip;
-
-//     await userToUpdate.save();
-//     return res.json('User updated');
-//   } catch (err) {
-//     return res.status(500).json('Server error');
-//   }
-// };
-
 const updateNotifications = async (req, res) => {
   try {
     const {
@@ -342,6 +324,7 @@ const addPaymentMethod = async (req, res) => {
 
     return res.json('Payment added');
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
@@ -380,6 +363,30 @@ const getSetupIntent = async (req, res) => {
 
     return res.json({ success: true, setupIntent: setupIntent });
   } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+const deleteAccount = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.id);
+
+    const stores = await Storefront.find({ userId: req.user.id });
+
+    for (var x = 0; x < stores.length; x++) {
+      await deleteSite({ siteId: stores[x].siteId });
+    }
+
+    await Storefront.deleteMany({ userId: req.user.id });
+
+    //delete any orders
+    //delete any customers
+    //delete any products
+    //deactivate stripe subscriptions
+
+    return res.json('Account deleted');
+  } catch (err) {
     return res.status(500).json('Server error');
   }
 };
@@ -398,4 +405,5 @@ module.exports = {
   addPaymentMethod,
   deletePaymentMethod,
   updateSellerProfile,
+  deleteAccount,
 };

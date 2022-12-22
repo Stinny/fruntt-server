@@ -10,6 +10,7 @@ const {
   deleteSite,
   updateSiteName,
 } = require('../utils/netlifyApi');
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 const getStorefront = async (req, res) => {
   try {
@@ -155,11 +156,12 @@ const editStyles = async (req, res) => {
     storefrontToEdit.style.headerColor = header;
     storefrontToEdit.style.reviewBackground = reviewBackground;
     storefrontToEdit.style.faqBackground = faqBackground;
+    storefrontToEdit.designAdded = true;
 
     storefrontToEdit.lastEdited = new Date();
 
     await storefrontToEdit.save();
-    return res.json('Styles saved');
+    return res.json({ msg: 'Styles saved', store: storefrontToEdit });
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
@@ -233,14 +235,44 @@ const addStorefront = async (req, res) => {
   const { pageName } = req.body;
 
   try {
+    const user = await User.findById(req.user.id);
     const storeExists = await Storefront.find({ name: pageName });
 
-    if (storeExists.length) return res.json('Already exists');
-    //create the new storefront mongo doc
+    if (storeExists.length) return res.json({ msg: 'Already exists' });
+
     const storeFront = new Storefront({
       userId: req.user.id,
       name: pageName,
     });
+
+    if (!user.subscriptionId) {
+      const subscription = await stripe.subscriptions.create({
+        customer: user.customerId,
+        items: [{ price: process.env.PRICE }],
+        default_payment_method: user.paymentMethod.id,
+        proration_behavior: 'none',
+      });
+
+      user.subscriptionId = subscription.id;
+      user.subscriptionItemId = subscription.items.data[0].id;
+      await user.save();
+    } else {
+      try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: 500,
+          currency: 'usd',
+          payment_method_types: ['card'],
+          customer: user.customerId,
+        });
+
+        await stripe.paymentIntents.confirm(paymentIntent.id, {
+          payment_method: user.paymentMethod.id,
+        });
+      } catch (err) {
+        console.log(err);
+        return res.json({ msg: 'Payment failed' });
+      }
+    }
 
     const deployStore = await createSite(pageName, storeFront._id);
 
@@ -250,11 +282,21 @@ const addStorefront = async (req, res) => {
     await storeFront.save();
 
     const stores = await Storefront.find({ userId: req.user.id });
-
     let storeIds = [];
     for (var i = 0; i < stores.length; i++) {
       storeIds.push({ id: stores[i]._id, url: stores[i].url });
     }
+
+    let quantity = storeIds.length > 1 ? storeIds.length - 1 : 1;
+
+    //update subscriptionItem quantity based on amount of stores
+    const subscriptionItem = await stripe.subscriptionItems.update(
+      user.subscriptionItemId,
+      {
+        quantity: quantity,
+        proration_behavior: 'none',
+      }
+    );
 
     return res.json({
       msg: 'Page added',
@@ -262,6 +304,7 @@ const addStorefront = async (req, res) => {
       storeIds: storeIds,
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
@@ -271,6 +314,7 @@ const deleteStore = async (req, res) => {
 
   try {
     const storefront = await Storefront.findById(storeId);
+    const user = await User.findById(req.user.id);
 
     const deleteProduct = await Product.deleteMany({ storeId: storefront._id });
     const deletedStore = await deleteSite({ siteId: storefront.siteId });
@@ -279,10 +323,26 @@ const deleteStore = async (req, res) => {
 
     const stores = await Storefront.find({ userId: req.user.id });
 
+    //create new stripe Price (old - $5)
+    //update the users stripe Subscription with new price but don't charge
+
     let storeIds = [];
     for (var i = 0; i < stores.length; i++) {
       storeIds.push({ id: stores[i]._id, url: stores[i].url });
     }
+
+    const subscriptionItem = await stripe.subscriptionItems.retrieve(
+      user.subscriptionItemId
+    );
+
+    //update subscriptionItem quantity based on amount of stores
+    const updateSubscriptionItem = await stripe.subscriptionItems.update(
+      user.subscriptionItemId,
+      {
+        quantity: subscriptionItem.quantity - 1,
+        proration_behavior: 'none',
+      }
+    );
 
     return res.json({
       msg: 'Page deleted',

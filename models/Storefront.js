@@ -10,6 +10,8 @@ const StorefrontSchema = new mongoose.Schema(
     visits: { type: Number, default: 0 },
     lastEdited: { type: Date },
     stripeOnboard: { type: Boolean, default: false },
+    productAdded: { type: Boolean, default: false },
+    designAdded: { type: Boolean, default: false },
     style: {
       pageBackground: { type: String, default: '#ffffff' },
       navbarBackground: { type: String, default: '#ffffff' },

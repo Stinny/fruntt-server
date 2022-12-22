@@ -92,6 +92,7 @@ const create = async (req, res) => {
   } = req.body;
 
   try {
+    const storefront = await Storefront.findById(storeId);
     //try to validate address
     const validAddress = await validateBusAddress({
       address,
@@ -138,8 +139,11 @@ const create = async (req, res) => {
         }
       }
 
+      storefront.productAdded = true;
+
+      await storefront.save();
       const savedProduct = await newProduct.save();
-      return res.json('Item added');
+      return res.json({ msg: 'Item added', store: storefront });
     } else {
       return res.json('Invalid address');
     }
@@ -337,7 +341,13 @@ const remove = async (req, res) => {
   const productId = req.params.productId;
 
   try {
+    const product = await Product.findById(productId);
+    const storefront = await Storefront.findById(product.storeId);
+
     await Product.findByIdAndDelete(productId);
+
+    storefront.productAdded = false;
+    await storefront.save();
 
     res.status(200).json('Item deleted');
   } catch (err) {

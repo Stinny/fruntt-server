@@ -32,5 +32,6 @@ router.post('/confirmemail', isTokenValid, setUser, auth.confirmEmail);
 
 router.post('/addpayment', isTokenValid, setUser, auth.addPaymentMethod);
 router.post('/deletepayment', isTokenValid, setUser, auth.deletePaymentMethod);
+router.post('/deleteaccount', isTokenValid, setUser, auth.deleteAccount);
 
 module.exports = router;
