@@ -259,7 +259,7 @@ const addStorefront = async (req, res) => {
     } else {
       try {
         const paymentIntent = await stripe.paymentIntents.create({
-          amount: 500,
+          amount: 300,
           currency: 'usd',
           payment_method_types: ['card'],
           customer: user.customerId,

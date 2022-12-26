@@ -127,7 +127,7 @@ const register = async (req, res) => {
       },
     });
   } catch (err) {
-    console.log(err.data);
+    console.log(err);
     res.status(500).json(err);
   }
 };
@@ -176,9 +176,6 @@ const getOnboardUrl = async (req, res) => {
       const stripeAcc = await stripe.accounts.create({
         type: 'standard',
         business_type: 'individual',
-        business_profile: {
-          url: storefront.url,
-        },
       });
       user.stripeId = stripeAcc.id;
     }
@@ -195,6 +192,7 @@ const getOnboardUrl = async (req, res) => {
 
     return res.json(onboardUrl);
   } catch (err) {
+    console.log(err);
     return res.status(500).json(err);
   }
 };
@@ -370,6 +368,12 @@ const getSetupIntent = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id);
+
+    if (user.subscriptionId) {
+      const deleted = await stripe.subscriptions.del(user.subscriptionId);
+    }
+
     await User.findByIdAndDelete(req.user.id);
 
     const stores = await Storefront.find({ userId: req.user.id });
