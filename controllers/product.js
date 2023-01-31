@@ -1,12 +1,16 @@
 const Product = require('../models/Product');
 const Customer = require('../models/Customer');
-const { uploadToS3, deleteObjFromS3 } = require('../utils/uploadToS3');
+const {
+  uploadToS3,
+  uploadFilesToS3,
+  deleteObjFromS3,
+  deleteFileleFromS3,
+} = require('../utils/uploadToS3');
 const Storefront = require('../models/Storefront');
 const { validateBusAddress } = require('../utils/genShippingLabel');
 
 //gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
-  console.log(req.params.storeId);
   try {
     const item = await Product.find({ storeId: req.params.storeId });
 
@@ -153,80 +157,6 @@ const create = async (req, res) => {
   }
 };
 
-//creates a product from Aliexpress product data
-//recieves data {title, desc, price, etc.} and image upload data
-const createAliProduct = async (req, res) => {
-  const {
-    title,
-    description,
-    productPrice,
-    shippingFrom,
-    shippingTo,
-    prodReviews,
-    images,
-    totalRating,
-    stock,
-    published,
-    numOfSales,
-    itemUrl,
-    options,
-    shippingPrice,
-    estimatedDelivery,
-    storeId,
-  } = req.body;
-
-  try {
-    const newProduct = new Product({
-      title: title,
-      description: description,
-      price: productPrice,
-      userId: req.user.id,
-      storeId: storeId,
-      stock: stock,
-      published: published,
-      aliShipsFrom: shippingFrom,
-      aliShipsTo: shippingTo,
-      aliRating: totalRating,
-      numberOfSales: numOfSales,
-      aliUrl: itemUrl,
-      shippingPrice: shippingPrice,
-      aliEstimatedDelivery: estimatedDelivery,
-      ali: true,
-    });
-
-    //push images data to newProduct doc
-    if (images.length) {
-      for (var i = 0; i < images.length; i++) {
-        newProduct.aliImages.push(images[i]);
-      }
-    }
-
-    //push the options data
-    if (options.length) {
-      for (var i = 0; i < options.length; i++) {
-        newProduct.options.push(options[i]);
-      }
-    }
-
-    if (prodReviews.length) {
-      for (var i = 0; i < prodReviews.length; i++) {
-        console.log(prodReviews[i].review);
-        newProduct.aliReviews.push({
-          date: prodReviews[i].review.reviewDate,
-          rating: prodReviews[i].review.reviewStarts,
-          content: prodReviews[i].review.reviewContent,
-        });
-      }
-    }
-
-    const savedProduct = await newProduct.save();
-    return res.json('Item added');
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json('Server Error');
-  }
-};
-
 //updates single product
 const update = async (req, res) => {
   const productId = req.params.productId;
@@ -301,41 +231,6 @@ const update = async (req, res) => {
   }
 };
 
-//updates single product
-const updateAli = async (req, res) => {
-  const productId = req.params.productId;
-  const {
-    title,
-    description,
-    price,
-    stock,
-    published,
-    shippingPrice,
-    estimatedDelivery,
-  } = req.body;
-
-  try {
-    const productToUpdate = await Product.findById(productId);
-
-    //make updates
-    productToUpdate.title = title;
-    productToUpdate.description = description;
-    productToUpdate.price = price;
-    productToUpdate.stock = stock;
-    productToUpdate.published = published;
-    productToUpdate.shippingPrice = shippingPrice;
-    productToUpdate.aliEstimatedDelivery = estimatedDelivery;
-
-    //save the updates to the product doc
-    await productToUpdate.save();
-
-    res.status(200).json('Item updated');
-  } catch (err) {
-    console.log(err);
-    res.status(500).json('Server Error');
-  }
-};
-
 //deletes a specific product
 const remove = async (req, res) => {
   const productId = req.params.productId;
@@ -366,6 +261,30 @@ const getItemImages = async (req, res) => {
   }
 };
 
+//gets coverImage for digital products
+const getCoverImage = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+    const coverImage = product.coverImage;
+
+    return res.json(coverImage);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+//gets all files for a specific digital product
+const getAllFiles = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+    const files = product.files;
+
+    return res.json(files);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 //image upload enpoint
 //uploads files to s3 bucket
 const imageUpload = async (req, res) => {
@@ -382,7 +301,123 @@ const imageUpload = async (req, res) => {
 
     res.status(200).json(urls);
   } catch (err) {
+    console.log(err);
     res.status(500).json('Server error');
+  }
+};
+
+const digitalFilesUpload = async (req, res) => {
+  const files = req.files;
+
+  let fileData = [];
+
+  try {
+    for (var i = 0; i < files.length; i++) {
+      const uploadedFile = await uploadFilesToS3(files[i]);
+      fileData.push({
+        url: uploadedFile.Location,
+        key: uploadedFile.Key,
+        name: files[i].originalname,
+      });
+    }
+
+    return res.json(fileData);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const createDigitalProduct = async (req, res) => {
+  const {
+    title,
+    description,
+    price,
+    published,
+    coverImage,
+    files,
+    storeId,
+    digitalType,
+  } = req.body;
+
+  try {
+    const storefront = await Storefront.findById(storeId);
+    const newDigitalProduct = new Product({
+      storeId: storeId,
+      userId: req.user.id,
+      title: title,
+      price: price,
+      description: description,
+      published: published,
+      digitalType: digitalType,
+      coverImage: {
+        url: coverImage[0].url,
+        key: coverImage[0].key,
+      },
+
+      type: 'digital',
+    });
+
+    if (files.length) {
+      for (var i = 0; i < files.length; i++) {
+        newDigitalProduct.files.push({
+          key: files[i].key,
+          url: files[i].url,
+          name: files[i].name,
+        });
+      }
+    }
+
+    storefront.productAdded = true;
+
+    await newDigitalProduct.save();
+    await storefront.save();
+
+    return res.json({ msg: 'Product added', store: storefront });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json();
+  }
+};
+
+const editDigitalProduct = async (req, res) => {
+  const {
+    title,
+    description,
+    price,
+    published,
+    coverImageUrl,
+    coverImageKey,
+    files,
+    digitalType,
+  } = req.body;
+  const productId = req.params.productId;
+
+  try {
+    const productToEdit = await Product.findById(productId);
+
+    productToEdit.title = title;
+    productToEdit.description = description;
+    productToEdit.price = price;
+    productToEdit.published = published;
+    productToEdit.digitalType = digitalType;
+
+    if (coverImageUrl && coverImageKey) {
+      productToEdit.coverImage.url = coverImageUrl;
+      productToEdit.coverImage.key = coverImageKey;
+    }
+
+    if (files.length) {
+      for (var x = 0; x < files.length; x++) {
+        productToEdit.files.push(files[x]);
+      }
+    }
+
+    await productToEdit.save();
+
+    return res.json('Product updated');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
   }
 };
 
@@ -393,11 +428,40 @@ const imageDelete = async (req, res) => {
   try {
     const product = await Product.findById(productId); //get product to access images
 
-    await product.images.pull({ _id: imgId }); //delete the image by the id
+    if (product?.type === 'digital') {
+      product.coverImage.url = '';
+      product.coverImage.key = '';
+    } else {
+      await product.images.pull({ _id: imgId }); //delete the image by the id
+    }
     await product.save();
 
     const deletedImgReq = await deleteObjFromS3(key); //delete obj from S3 bucket by the key
     return res.json('Image deleted');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+//deltes a file from a digital product
+const deleteFile = async (req, res) => {
+  const { productId, fileId, key } = req.body;
+
+  console.log(req.body);
+
+  try {
+    const product = await Product.findById(productId);
+
+    //remove from doc
+    await product.files.pull({ _id: fileId });
+
+    await product.save();
+
+    //delete from s3 bucket
+    const deleteFromS3 = await deleteFileleFromS3(key);
+
+    return res.json('File deleted');
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -437,13 +501,17 @@ module.exports = {
   getStoreProducts,
   getProduct,
   create,
-  createAliProduct,
   update,
-  updateAli,
   remove,
   imageUpload,
   imageDelete,
   getItemImages,
+  getCoverImage,
   addFAQ,
   deleteFAQ,
+  digitalFilesUpload,
+  createDigitalProduct,
+  editDigitalProduct,
+  deleteFile,
+  getAllFiles,
 };

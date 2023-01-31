@@ -15,6 +15,9 @@ router.put('/update/:orderId', orders.update);
 //gets single order
 router.get('/:orderId', orders.getOrder);
 
+//gets single digital order
+router.get('/digital/:orderId', orders.getDigitalOrder);
+
 router.post(
   '/fulfill/:orderId',
   isTokenValid,

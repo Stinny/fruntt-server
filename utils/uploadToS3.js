@@ -15,33 +15,66 @@ const genUUID = () => {
   return uuid;
 };
 
-const s3 = new S3({
+const s3ForImages = new S3({
   accessKeyId: process.env.AWS_A_KEY,
   secretAccessKey: process.env.AWS_S_KEY,
-  Bucket: process.env.AWS_BUCK_NAME,
+  Bucket: process.env.AWS_IMAGES_BUCK_NAME,
+});
+
+const s3ForFiles = new S3({
+  accessKeyId: process.env.AWS_A_KEY,
+  secretAccessKey: process.env.AWS_S_KEY,
+  Bucket: process.env.AWS_FILES_BUCK_NAME,
 });
 
 const uploadToS3 = (file) => {
   const key = genUUID() + file.originalname;
 
   const params = {
-    Bucket: process.env.AWS_BUCK_NAME,
+    Bucket: process.env.AWS_IMAGES_BUCK_NAME,
     Key: key,
     Body: file.buffer,
     ContentType: 'image/jpeg',
     ACL: 'public-read',
   };
 
-  return s3.upload(params).promise();
+  return s3ForImages.upload(params).promise();
+};
+
+const uploadFilesToS3 = (file) => {
+  const key = genUUID() + file.originalname;
+
+  const params = {
+    Bucket: process.env.AWS_FILES_BUCK_NAME,
+    Key: key,
+    Body: file.buffer,
+    ACL: 'public-read',
+  };
+
+  return s3ForFiles.upload(params).promise();
 };
 
 const deleteObjFromS3 = (key) => {
   const params = {
-    Bucket: process.env.AWS_BUCK_NAME,
+    Bucket: process.env.AWS_IMAGES_BUCK_NAME,
     Key: key,
   };
 
-  return s3.deleteObject(params).promise();
+  return s3ForImages.deleteObject(params).promise();
 };
 
-module.exports = { uploadToS3, deleteObjFromS3 };
+const deleteFileleFromS3 = (key) => {
+  const params = {
+    Bucket: process.env.AWS_FILES_BUCK_NAME,
+    Key: key,
+  };
+
+  return s3ForFiles.deleteObject(params).promise();
+};
+
+module.exports = {
+  uploadToS3,
+  uploadFilesToS3,
+  deleteObjFromS3,
+  deleteFileleFromS3,
+};

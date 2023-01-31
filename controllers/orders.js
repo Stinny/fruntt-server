@@ -47,6 +47,8 @@ const create = async (req, res) => {
   try {
     const { total, storeId, item, qty, options } = req.body;
 
+    console.log(item);
+
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
 
@@ -73,7 +75,7 @@ const create = async (req, res) => {
       options: options,
     });
 
-    if (!item.ali) {
+    if (item.type === 'physical') {
       newOrder.shipsFrom.address = item.shipsFrom.address;
       newOrder.shipsFrom.country = item.shipsFrom.country;
       newOrder.shipsFrom.state = item.shipsFrom.state;
@@ -96,16 +98,14 @@ const updateOrderAmount = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
-    const finalAmount = Number(
-      ((total + order.item.shippingPrice) * 100).toFixed(2)
-    );
-
-    const applicationFee = ((finalAmount / 100) * 0.02).toFixed(2) * 100;
+    const finalAmount =
+      order.item.type === 'physical'
+        ? Number(((total + order.item.shippingPrice) * 100).toFixed(2))
+        : Number((total * 100).toFixed(2));
 
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
       amount: finalAmount,
-      // application_fee_amount: applicationFee.toFixed(),
     });
 
     return res.json('Amount updated');
@@ -140,18 +140,25 @@ const update = async (req, res) => {
     orderToUpdate.firstName = firstName;
     orderToUpdate.lastName = lastName;
     orderToUpdate.email = email;
-    orderToUpdate.shippingAddress.country = 'US';
-    orderToUpdate.shippingAddress.city = city;
-    orderToUpdate.shippingAddress.state = state;
-    orderToUpdate.shippingAddress.zipcode = zip;
-    orderToUpdate.shippingAddress.address = address;
-    orderToUpdate.qty = qty;
-    orderToUpdate.total = total + updateItem.shippingPrice;
+
     orderToUpdate.placedOn = new Date();
     orderToUpdate.paid = true;
-    orderToUpdate.options = options;
 
-    updateItem.stock -= 1;
+    if (orderToUpdate.item.type === 'physical') {
+      orderToUpdate.shippingAddress.country = 'US';
+      orderToUpdate.shippingAddress.city = city;
+      orderToUpdate.shippingAddress.state = state;
+      orderToUpdate.shippingAddress.zipcode = zip;
+      orderToUpdate.shippingAddress.address = address;
+      orderToUpdate.qty = qty;
+      orderToUpdate.total = total + updateItem.shippingPrice;
+
+      orderToUpdate.options = options;
+
+      updateItem.stock -= 1;
+    } else if (orderToUpdate.item.type === 'digital') {
+      orderToUpdate.total = total;
+    }
 
     const newCustomer = new Customer({
       firstName: firstName,
@@ -356,7 +363,7 @@ const getRates = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
-    if (order.fulfilled || order.labelUrl || order.item.ali)
+    if (order.fulfilled || order.labelUrl || order.item.type === 'digital')
       return res.json(rates);
 
     const rateResponse = await getShippingRates({
@@ -391,6 +398,25 @@ const getRates = async (req, res) => {
   }
 };
 
+const getDigitalOrder = async (req, res) => {
+  const orderId = req.params.orderId;
+
+  console.log(orderId);
+
+  try {
+    const order = await Order.findById(orderId);
+    const storeFront = await Storefront.findById(order?.storeId);
+
+    if (order.paid) {
+      return res.json({ order: order, store: storeFront });
+    } else {
+      return res.json('Order not paid for.');
+    }
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getOrder,
   getStoreOrders,
@@ -403,4 +429,5 @@ module.exports = {
   getRates,
   getShippingLabel,
   updateOrderAmount,
+  getDigitalOrder,
 };

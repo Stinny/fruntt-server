@@ -20,8 +20,13 @@ router.get('/:productId', product.getProduct);
 //creates product
 router.post('/create', isTokenValid, setUser, product.create);
 
-//creates an ali product
-router.post('/create/ali', isTokenValid, setUser, product.createAliProduct);
+//creates product
+router.post(
+  '/create/digital',
+  isTokenValid,
+  setUser,
+  product.createDigitalProduct
+);
 
 router.post('/addfaq', isTokenValid, setUser, product.addFAQ);
 
@@ -36,13 +41,13 @@ router.post(
   product.update
 );
 
-//updates ali product
+//updates digital product
 router.post(
-  '/edit/ali/:productId',
+  '/editdigital/:productId',
   isTokenValid,
   setUser,
   isProductOwner,
-  product.updateAli
+  product.editDigitalProduct
 );
 
 //deletes product
@@ -50,8 +55,16 @@ router.delete('/delete/:productId', isTokenValid, product.remove);
 
 router.post('/imageupload', multipleUpload, product.imageUpload);
 
+router.post('/filesupload', multipleUpload, product.digitalFilesUpload);
+
 router.post('/image/delete/', product.imageDelete);
 
+router.post('/file/delete/', product.deleteFile);
+
 router.get('/images/:productId', product.getItemImages);
+
+router.get('/coverimage/:productId', product.getCoverImage);
+
+router.get('/files/:productId', product.getAllFiles);
 
 module.exports = router;

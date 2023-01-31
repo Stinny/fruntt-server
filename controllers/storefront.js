@@ -29,10 +29,20 @@ const getStorefrontById = async (req, res) => {
     const storeOwner = await User.findById(storefront.userId);
 
     const stores = await Storefront.find({ userId: storeOwner._id });
+    // const orders = await Order.find({ storeId: storefront });
 
+    let successfulOrders = [];
     let storeIds = [];
+
     for (var i = 0; i < stores.length; i++) {
       storeIds.push({ id: stores[i]._id, url: stores[i].url });
+      const orders = await Order.find({ storeId: stores[i]._id });
+
+      for (var x = 0; x < orders.length; x++) {
+        if (orders[x].paid) {
+          successfulOrders.push(orders[x]);
+        }
+      }
     }
 
     return res.json({
@@ -48,6 +58,7 @@ const getStorefrontById = async (req, res) => {
         twitter: storeOwner.sellerProfile.twitter,
         tikok: storeOwner.sellerProfile.tiktok,
         profilePic: storeOwner.sellerProfile.picture.url,
+        numberOfSales: successfulOrders.length,
       },
       storeIds: storeIds,
     });
