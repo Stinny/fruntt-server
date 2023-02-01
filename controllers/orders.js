@@ -158,6 +158,7 @@ const update = async (req, res) => {
       updateItem.stock -= 1;
     } else if (orderToUpdate.item.type === 'digital') {
       orderToUpdate.total = total;
+      orderToUpdate.fulfilled = true;
     }
 
     const newCustomer = new Customer({
