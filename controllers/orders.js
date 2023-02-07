@@ -12,7 +12,7 @@ const {
   sendOrderConfirmEmail,
   sendOrderFulfilledEmail,
 } = require('../email/transactional');
-const stripe = require('stripe')(process.env.SK_TEST);
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 //gets a single order
 const getOrder = async (req, res) => {
@@ -46,8 +46,6 @@ const getStoreOrders = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { total, storeId, item, qty, options } = req.body;
-
-    console.log(item);
 
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
@@ -87,6 +85,7 @@ const create = async (req, res) => {
 
     res.json({ orderId: newOrder._id });
   } catch (err) {
+    console.log(err);
     res.status(500).json(err.message);
   }
 };

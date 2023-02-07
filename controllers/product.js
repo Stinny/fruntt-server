@@ -448,8 +448,6 @@ const imageDelete = async (req, res) => {
 const deleteFile = async (req, res) => {
   const { productId, fileId, key } = req.body;
 
-  console.log(req.body);
-
   try {
     const product = await Product.findById(productId);
 
@@ -458,8 +456,8 @@ const deleteFile = async (req, res) => {
 
     await product.save();
 
-    //delete from s3 bucket
-    const deleteFromS3 = await deleteFileleFromS3(key);
+    // //delete from s3 bucket
+    // const deleteFromS3 = await deleteFileleFromS3(key);
 
     return res.json('File deleted');
   } catch (err) {
