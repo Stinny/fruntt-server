@@ -64,6 +64,34 @@ const sendOrderConfirmEmail = async ({
   });
 };
 
+const sendDigitalConfirmEmail = async ({
+  customerEmail,
+  customerName,
+  orderId,
+  storeEmail,
+  storeName,
+  orderItem,
+  orderItemPrice,
+  orderTotal,
+  orderQty,
+}) => {
+  await client.sendEmailWithTemplate({
+    From: `${storeName}@fruntt.com`,
+    To: customerEmail,
+    ReplyTo: storeEmail,
+    TemplateAlias: 'digital-order-success',
+    TemplateModel: {
+      customerName: customerName,
+      orderId: orderId,
+      storeName: storeName,
+      orderItem: orderItem,
+      orderItemPrice: orderItemPrice,
+      orderTotal: orderTotal,
+      orderQty: orderQty,
+    },
+  });
+};
+
 const sendOrderFulfilledEmail = async ({
   customerEmail,
   customerName,
@@ -91,4 +119,5 @@ module.exports = {
   sendReviewLinkEmail,
   sendOrderConfirmEmail,
   sendOrderFulfilledEmail,
+  sendDigitalConfirmEmail,
 };

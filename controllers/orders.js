@@ -11,6 +11,7 @@ const Product = require('../models/Product');
 const {
   sendOrderConfirmEmail,
   sendOrderFulfilledEmail,
+  sendDigitalConfirmEmail,
 } = require('../email/transactional');
 const stripe = require('stripe')(process.env.SK_TEST);
 
@@ -187,17 +188,31 @@ const update = async (req, res) => {
 
     orderToUpdate.customerId = newCustomer._id;
 
-    await sendOrderConfirmEmail({
-      customerEmail: orderToUpdate.email,
-      customerName: orderToUpdate.firstName,
-      orderId: orderToUpdate._id,
-      orderItem: orderToUpdate.item.title,
-      orderItemPrice: orderToUpdate.item.price,
-      orderTotal: orderToUpdate.total,
-      orderQty: orderToUpdate.qty,
-      storeEmail: storefront.email,
-      storeName: storefront.name,
-    });
+    if (orderToUpdate.item.type === 'digital') {
+      await sendDigitalConfirmEmail({
+        customerEmail: orderToUpdate.email,
+        customerName: orderToUpdate.firstName,
+        orderId: orderToUpdate._id,
+        orderItem: orderToUpdate.item.title,
+        orderItemPrice: orderToUpdate.item.price,
+        orderTotal: orderToUpdate.total,
+        orderQty: orderToUpdate.qty,
+        storeEmail: storefront.email,
+        storeName: storefront.name,
+      });
+    } else {
+      await sendOrderConfirmEmail({
+        customerEmail: orderToUpdate.email,
+        customerName: orderToUpdate.firstName,
+        orderId: orderToUpdate._id,
+        orderItem: orderToUpdate.item.title,
+        orderItemPrice: orderToUpdate.item.price,
+        orderTotal: orderToUpdate.total,
+        orderQty: orderToUpdate.qty,
+        storeEmail: storefront.email,
+        storeName: storefront.name,
+      });
+    }
 
     storefrontOwner.sellerProfile.numberOfSales += 1;
 
