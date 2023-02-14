@@ -370,10 +370,6 @@ const deleteAccount = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    if (user.subscriptionId) {
-      const deleted = await stripe.subscriptions.del(user.subscriptionId);
-    }
-
     await User.findByIdAndDelete(req.user.id);
 
     const stores = await Storefront.find({ userId: req.user.id });
