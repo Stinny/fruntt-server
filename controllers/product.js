@@ -436,7 +436,6 @@ const imageDelete = async (req, res) => {
     }
     await product.save();
 
-    const deletedImgReq = await deleteObjFromS3(key); //delete obj from S3 bucket by the key
     return res.json('Image deleted');
   } catch (err) {
     console.log(err);

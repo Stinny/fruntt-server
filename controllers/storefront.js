@@ -256,35 +256,6 @@ const addStorefront = async (req, res) => {
       name: pageName,
     });
 
-    if (!user.subscriptionId) {
-      const subscription = await stripe.subscriptions.create({
-        customer: user.customerId,
-        items: [{ price: process.env.PRICE }],
-        default_payment_method: user.paymentMethod.id,
-        proration_behavior: 'none',
-      });
-
-      user.subscriptionId = subscription.id;
-      user.subscriptionItemId = subscription.items.data[0].id;
-      await user.save();
-    } else {
-      try {
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: 300,
-          currency: 'usd',
-          payment_method_types: ['card'],
-          customer: user.customerId,
-        });
-
-        await stripe.paymentIntents.confirm(paymentIntent.id, {
-          payment_method: user.paymentMethod.id,
-        });
-      } catch (err) {
-        console.log(err);
-        return res.json({ msg: 'Payment failed' });
-      }
-    }
-
     const deployStore = await createSite(pageName, storeFront._id);
 
     storeFront.url = deployStore.url;
@@ -298,17 +269,6 @@ const addStorefront = async (req, res) => {
       storeIds.push({ id: stores[i]._id, url: stores[i].url });
     }
 
-    let quantity = storeIds.length > 1 ? storeIds.length - 1 : 1;
-
-    //update subscriptionItem quantity based on amount of stores
-    const subscriptionItem = await stripe.subscriptionItems.update(
-      user.subscriptionItemId,
-      {
-        quantity: quantity,
-        proration_behavior: 'none',
-      }
-    );
-
     return res.json({
       msg: 'Page added',
       storefront: storeFront,
@@ -320,6 +280,7 @@ const addStorefront = async (req, res) => {
   }
 };
 
+//deletes storefront doc and product docs and returns updated array of stores
 const deleteStore = async (req, res) => {
   const { storeId } = req.body;
 
@@ -341,19 +302,6 @@ const deleteStore = async (req, res) => {
     for (var i = 0; i < stores.length; i++) {
       storeIds.push({ id: stores[i]._id, url: stores[i].url });
     }
-
-    const subscriptionItem = await stripe.subscriptionItems.retrieve(
-      user.subscriptionItemId
-    );
-
-    //update subscriptionItem quantity based on amount of stores
-    const updateSubscriptionItem = await stripe.subscriptionItems.update(
-      user.subscriptionItemId,
-      {
-        quantity: subscriptionItem.quantity - 1,
-        proration_behavior: 'none',
-      }
-    );
 
     return res.json({
       msg: 'Page deleted',

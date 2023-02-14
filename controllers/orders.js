@@ -12,7 +12,7 @@ const {
   sendOrderConfirmEmail,
   sendOrderFulfilledEmail,
 } = require('../email/transactional');
-const stripe = require('stripe')(process.env.SK_TEST);
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 //gets a single order
 const getOrder = async (req, res) => {
@@ -97,14 +97,23 @@ const updateOrderAmount = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
 
-    const finalAmount =
-      order.item.type === 'physical'
-        ? Number(((total + order.item.shippingPrice) * 100).toFixed(2))
-        : Number((total * 100).toFixed(2));
+    //initial amount calculated
+    const amount =
+      order.item.type === 'physical' ? total + order.item.shippingPrice : total;
+    //final amount converted to cents
+    const finalAmount = amount.toFixed(2) * 100;
+
+    const platformFee = amount.toFixed(2) * 0.08;
+    const finalFee = platformFee.toFixed(2) * 100;
+
+    //formatted better for setting paymentIntent amount
+    const formattedAmount = Number(finalAmount.toFixed(2));
+    const formattedFee = Number(finalFee.toFixed(2));
 
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
-      amount: finalAmount,
+      amount: formattedAmount,
+      application_fee_amount: formattedFee,
     });
 
     return res.json('Amount updated');
