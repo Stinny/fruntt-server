@@ -104,7 +104,7 @@ const updateOrderAmount = async (req, res) => {
     //final amount converted to cents
     const finalAmount = amount.toFixed(2) * 100;
 
-    const platformFee = amount.toFixed(2) * 0.08;
+    const platformFee = amount.toFixed(2) * 0.01;
     const finalFee = platformFee.toFixed(2) * 100;
 
     //formatted better for setting paymentIntent amount
