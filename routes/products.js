@@ -61,6 +61,8 @@ router.post('/image/delete/', product.imageDelete);
 
 router.post('/file/delete/', product.deleteFile);
 
+router.post('/description/add', product.addDescription);
+
 router.get('/images/:productId', product.getItemImages);
 
 router.get('/coverimage/:productId', product.getCoverImage);

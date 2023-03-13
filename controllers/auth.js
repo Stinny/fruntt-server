@@ -96,6 +96,11 @@ const register = async (req, res) => {
     newUser.storeId = storeFront._id;
 
     const deployStore = await createSite(req.body.storeName, storeFront._id);
+    const createEnvs = await createEnv({
+      storeName: req.body.storeName,
+      storeId: storeFront._id,
+      siteId: deployStore.id,
+    });
 
     storeFront.url = deployStore.url;
     storeFront.siteId = deployStore.id;

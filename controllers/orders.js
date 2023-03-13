@@ -170,23 +170,23 @@ const update = async (req, res) => {
       orderToUpdate.fulfilled = true;
     }
 
-    const newCustomer = new Customer({
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      address: {
-        street: address,
-        city: city,
-        state: state,
-        zipcode: zip,
-      },
-      storeId: orderToUpdate.storeId,
-      orderId: orderToUpdate._id,
-      orderedOn: new Date(),
-      productId: orderToUpdate.item._id,
-    });
+    // const newCustomer = new Customer({
+    //   firstName: firstName,
+    //   lastName: lastName,
+    //   email: email,
+    //   address: {
+    //     street: address,
+    //     city: city,
+    //     state: state,
+    //     zipcode: zip,
+    //   },
+    //   storeId: orderToUpdate.storeId,
+    //   orderId: orderToUpdate._id,
+    //   orderedOn: new Date(),
+    //   productId: orderToUpdate.item._id,
+    // });
 
-    orderToUpdate.customerId = newCustomer._id;
+    // orderToUpdate.customerId = newCustomer._id;
 
     if (orderToUpdate.item.type === 'digital') {
       await sendDigitalConfirmEmail({
@@ -216,7 +216,7 @@ const update = async (req, res) => {
 
     storefrontOwner.sellerProfile.numberOfSales += 1;
 
-    await newCustomer.save();
+    // await newCustomer.save();
     await updateItem.save();
     await storefrontOwner.save();
 

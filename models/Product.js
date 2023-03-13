@@ -17,6 +17,16 @@ const ProductSchema = new mongoose.Schema(
     userId: { type: String },
     storeId: { type: String },
     numberOfSales: { type: Number, default: 0 },
+    info: {
+      type: String,
+      default:
+        '{"blocks":[{"key":"dbjri","text":"","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}',
+    },
+    content: {
+      type: String,
+      default:
+        '{"blocks":[{"key":"dbjri","text":"","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}',
+    },
     shipsFrom: {
       address: { type: String },
       country: { type: String },
@@ -24,6 +34,7 @@ const ProductSchema = new mongoose.Schema(
       city: { type: String },
       zipcode: { type: String },
     },
+    link: { type: String },
     faqs: [
       {
         question: { type: String },

@@ -9,6 +9,7 @@ const {
   createSite,
   deleteSite,
   updateSiteName,
+  createEnv,
 } = require('../utils/netlifyApi');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
@@ -251,17 +252,23 @@ const addStorefront = async (req, res) => {
 
     if (storeExists.length) return res.json({ msg: 'Already exists' });
 
-    const storeFront = new Storefront({
+    const storefront = new Storefront({
       userId: req.user.id,
       name: pageName,
     });
 
-    const deployStore = await createSite(pageName, storeFront._id);
+    const deployStore = await createSite(pageName, storefront._id);
+    console.log(deployStore);
+    const createEnvs = await createEnv({
+      storeName: pageName,
+      storeId: storefront._id,
+      siteId: deployStore.id,
+    });
 
-    storeFront.url = deployStore.url;
-    storeFront.siteId = deployStore.id;
+    storefront.url = deployStore.url;
+    storefront.siteId = deployStore.id;
 
-    await storeFront.save();
+    await storefront.save();
 
     const stores = await Storefront.find({ userId: req.user.id });
     let storeIds = [];
@@ -271,7 +278,7 @@ const addStorefront = async (req, res) => {
 
     return res.json({
       msg: 'Page added',
-      storefront: storeFront,
+      storefront: storefront,
       storeIds: storeIds,
     });
   } catch (err) {

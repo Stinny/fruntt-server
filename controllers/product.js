@@ -337,7 +337,11 @@ const createDigitalProduct = async (req, res) => {
     files,
     storeId,
     digitalType,
+    link,
+    content,
   } = req.body;
+
+  console.log(content);
 
   try {
     const storefront = await Storefront.findById(storeId);
@@ -353,7 +357,8 @@ const createDigitalProduct = async (req, res) => {
         url: coverImage[0].url,
         key: coverImage[0].key,
       },
-
+      link: link,
+      content: content,
       type: 'digital',
     });
 
@@ -389,6 +394,7 @@ const editDigitalProduct = async (req, res) => {
     coverImageKey,
     files,
     digitalType,
+    content,
   } = req.body;
   const productId = req.params.productId;
 
@@ -400,6 +406,7 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.price = price;
     productToEdit.published = published;
     productToEdit.digitalType = digitalType;
+    productToEdit.content = content;
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;
@@ -464,6 +471,22 @@ const deleteFile = async (req, res) => {
   }
 };
 
+const addDescription = async (req, res) => {
+  const { description, productId } = req.body;
+
+  try {
+    const product = await Product.findById(productId);
+
+    product.info = description;
+
+    await product.save();
+
+    return res.json('Description added');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 const addFAQ = async (req, res) => {
   const { productId, question, answer } = req.body;
 
@@ -511,4 +534,5 @@ module.exports = {
   editDigitalProduct,
   deleteFile,
   getAllFiles,
+  addDescription,
 };

@@ -22,6 +22,7 @@ const createSite = async (storeName, storeId) => {
 
   const body = {
     custom_domain: `${storeName}.fruntt.com`,
+    no_initial_build: true,
     repo: {
       id: '519604948', //github repo ID(need to be dynamic)
       installation_id: '24719337', //insallation ID of netlify on github(found in URL)
@@ -34,17 +35,48 @@ const createSite = async (storeName, storeId) => {
       stop_builds: false,
       dir: 'build',
       deploy_key_id: deployKey.id,
-      env: {
-        REACT_APP_STORE_ID: storeId,
-        REACT_APP_API_URL: 'https://fruntt-server.herokuapp.com/api',
-        REACT_APP_STORE_NAME: storeName,
-      },
+      // env: {
+      //   REACT_APP_STORE_ID: storeId,
+      //   REACT_APP_API_URL: 'https://fruntt-server.herokuapp.com/api',
+      //   REACT_APP_STORE_NAME: storeName,
+      // },
     },
   };
 
   const site = await netlifyReq.post('/sites', body); //request to netlify
 
   return site.data; //returning the response data
+};
+
+//creates the env vars needed for operation
+const createEnv = async ({ storeId, storeName, siteId, deployId }) => {
+  const body = [
+    {
+      key: 'REACT_APP_STORE_NAME',
+      scopes: ['builds', 'functions', 'runtime', 'post-processing'],
+      values: [{ value: storeName, context: 'all' }],
+    },
+    {
+      key: 'REACT_APP_STORE_ID',
+      scopes: ['builds', 'functions', 'runtime', 'post-processing'],
+      values: [{ value: storeId, context: 'all' }],
+    },
+    {
+      key: 'REACT_APP_API_URL',
+      scopes: ['builds', 'functions', 'runtime', 'post-processing'],
+      values: [
+        { value: 'https://fruntt-server.herokuapp.com/api', context: 'all' },
+      ],
+    },
+  ];
+
+  const createEnv = await netlifyReq.post(
+    `/accounts/stinny/env?site_id=${siteId}`,
+    body
+  );
+
+  //create a site build here
+  const build = await netlifyReq.post(`/sites/${siteId}/builds`);
 };
 
 //creates site using netlify API
@@ -64,4 +96,4 @@ const deleteSite = async ({ siteId }) => {
 
   return site.data;
 };
-module.exports = { createSite, updateSiteName, deleteSite };
+module.exports = { createSite, createEnv, updateSiteName, deleteSite };
