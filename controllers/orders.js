@@ -37,7 +37,10 @@ const getStoreOrders = async (req, res) => {
       storeId: storeId,
       paid: true,
     });
-    return res.status(200).json(orders);
+
+    //sort orders by date newest-oldest
+    const sortedOrders = orders.reverse();
+    return res.status(200).json(sortedOrders);
   } catch (err) {
     return res.status(500).json('Server error');
   }
