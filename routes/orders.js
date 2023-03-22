@@ -41,6 +41,10 @@ router.post(
 
 router.get('/status/:orderId', orders.getOrderStatus);
 
+router.get('/reviews/:storeId', orders.getReviews);
+
+router.post('/add/review', orders.addReview);
+
 router.get('/rates/:orderId', orders.getRates);
 
 router.post('/shippinglabel', isTokenValid, setUser, orders.getShippingLabel);

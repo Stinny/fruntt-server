@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
-  content: { type: String, required: true },
+  review: { type: String, required: true },
   rating: { type: Number, required: true },
-  customerId: { type: String, required: true },
   orderId: { type: String, required: true },
+  productId: { type: String },
+  email: { type: String },
+  storeId: { type: String },
 });
 
 const Review = mongoose.model('Review', reviewSchema);

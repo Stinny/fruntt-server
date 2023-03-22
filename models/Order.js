@@ -28,6 +28,7 @@ const OrderSchema = new mongoose.Schema(
     storeId: { type: String },
     paymentId: { type: String, required: true },
     clientId: { type: String, require: true },
+    reviewed: { type: Boolean, default: false },
     customerId: { type: String },
     labelUrl: { type: String },
     labelId: { type: String },

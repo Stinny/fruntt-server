@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Storefront = require('../models/Storefront');
 const Customer = require('../models/Customer');
 const User = require('../models/User');
+const Review = require('../models/Review');
 const {
   genShippingLabel,
   getShippingRates,
@@ -172,24 +173,6 @@ const update = async (req, res) => {
       orderToUpdate.total = total;
       orderToUpdate.fulfilled = true;
     }
-
-    // const newCustomer = new Customer({
-    //   firstName: firstName,
-    //   lastName: lastName,
-    //   email: email,
-    //   address: {
-    //     street: address,
-    //     city: city,
-    //     state: state,
-    //     zipcode: zip,
-    //   },
-    //   storeId: orderToUpdate.storeId,
-    //   orderId: orderToUpdate._id,
-    //   orderedOn: new Date(),
-    //   productId: orderToUpdate.item._id,
-    // });
-
-    // orderToUpdate.customerId = newCustomer._id;
 
     if (orderToUpdate.item.type === 'digital') {
       await sendDigitalConfirmEmail({
@@ -428,8 +411,6 @@ const getRates = async (req, res) => {
 const getDigitalOrder = async (req, res) => {
   const orderId = req.params.orderId;
 
-  console.log(orderId);
-
   try {
     const order = await Order.findById(orderId);
     const storeFront = await Storefront.findById(order?.storeId);
@@ -439,6 +420,46 @@ const getDigitalOrder = async (req, res) => {
     } else {
       return res.json('Order not paid for.');
     }
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+//creates a new review and marks order as reviewed
+const addReview = async (req, res) => {
+  const { rating, review, orderId, customerEmail } = req.body;
+
+  try {
+    const order = await Order.findById(orderId);
+
+    const newReview = new Review({
+      productId: order?.item?._id,
+      rating: rating,
+      review: review,
+      email: customerEmail,
+      orderId: orderId,
+      storeId: order?.storeId,
+    });
+
+    order.reviewed = true;
+
+    await newReview.save();
+    await order.save();
+
+    return res.json('Review added');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+//gets all reviews for a storefront
+const getReviews = async (req, res) => {
+  const storeId = req.params.storeId;
+
+  try {
+    const reviews = await Review.find({ storeId: storeId });
+
+    return res.json(reviews);
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -457,4 +478,6 @@ module.exports = {
   getShippingLabel,
   updateOrderAmount,
   getDigitalOrder,
+  addReview,
+  getReviews,
 };
