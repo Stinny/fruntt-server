@@ -381,7 +381,7 @@ const getDigitalOrder = async (req, res) => {
 
 //creates a new review and marks order as reviewed
 const addReview = async (req, res) => {
-  const { rating, review, orderId, customerEmail } = req.body;
+  const { rating, review, orderId, name, customerEmail } = req.body;
 
   try {
     const order = await Order.findById(orderId);
@@ -393,6 +393,7 @@ const addReview = async (req, res) => {
       email: customerEmail,
       orderId: orderId,
       storeId: order?.storeId,
+      name: name,
     });
 
     order.reviewed = true;

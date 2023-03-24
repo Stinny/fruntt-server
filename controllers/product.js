@@ -43,6 +43,7 @@ const getStoreProducts = async (req, res) => {
         reviewsData.push({
           review: reviews[i].review,
           rating: reviews[i].rating,
+          name: reviews[i]?.name,
           reviewedOn: reviews[i].reviewedOn,
         });
       }
