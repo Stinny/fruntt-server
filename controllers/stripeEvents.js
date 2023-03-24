@@ -1,6 +1,7 @@
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
+const Order = require('../models/Order');
 
 const handleStripeEvents = async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -20,7 +21,7 @@ const handleStripeEvents = async (req, res) => {
 
   switch (event?.type) {
     case 'account.updated':
-      const account = event.data.object;
+      const account = event?.data?.object;
       try {
         if (account.charges_enabled) {
           const user = await User.findOne({ stripeId: account.id });
@@ -33,7 +34,18 @@ const handleStripeEvents = async (req, res) => {
         console.log(err.message);
         break;
       }
+    case 'payment_intent.succeeded':
+      const paymentIntent = event?.data?.object;
+      try {
+        const order = await Order.findOne({ paymentId: paymentIntent?.id });
+        order.paid = true;
 
+        await order.save();
+        break;
+      } catch (err) {
+        console.log(err.message);
+        break;
+      }
     default:
       break;
   }

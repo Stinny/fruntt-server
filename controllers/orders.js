@@ -74,8 +74,8 @@ const create = async (req, res) => {
       clientId: paymentIntent.client_secret,
       storeId: storeId,
       item: item,
-      qty: qty,
       options: options,
+      total: total,
     });
 
     if (item.type === 'physical') {
@@ -131,18 +131,7 @@ const updateOrderAmount = async (req, res) => {
 //upodates an order with final data
 const update = async (req, res) => {
   const orderId = req.params.orderId;
-  const {
-    firstName,
-    lastName,
-    email,
-    address,
-    city,
-    state,
-    zip,
-    total,
-    qty,
-    options,
-  } = req.body;
+  const { email } = req.body;
 
   try {
     const orderToUpdate = await Order.findById(orderId);
@@ -150,55 +139,20 @@ const update = async (req, res) => {
     const storefront = await Storefront.findById(orderToUpdate.storeId);
     const storefrontOwner = await User.findById(storefront.userId);
 
-    orderToUpdate.firstName = firstName;
-    orderToUpdate.lastName = lastName;
     orderToUpdate.email = email;
-
     orderToUpdate.placedOn = new Date();
-    orderToUpdate.paid = true;
+    orderToUpdate.fulfilled = true;
 
-    if (orderToUpdate.item.type === 'physical') {
-      orderToUpdate.shippingAddress.country = 'US';
-      orderToUpdate.shippingAddress.city = city;
-      orderToUpdate.shippingAddress.state = state;
-      orderToUpdate.shippingAddress.zipcode = zip;
-      orderToUpdate.shippingAddress.address = address;
-      orderToUpdate.qty = qty;
-      orderToUpdate.total = total + updateItem.shippingPrice;
+    await sendDigitalConfirmEmail({
+      customerEmail: orderToUpdate.email,
 
-      orderToUpdate.options = options;
-
-      updateItem.stock -= 1;
-    } else if (orderToUpdate.item.type === 'digital') {
-      orderToUpdate.total = total;
-      orderToUpdate.fulfilled = true;
-    }
-
-    if (orderToUpdate.item.type === 'digital') {
-      await sendDigitalConfirmEmail({
-        customerEmail: orderToUpdate.email,
-        customerName: orderToUpdate.firstName,
-        orderId: orderToUpdate._id,
-        orderItem: orderToUpdate.item.title,
-        orderItemPrice: orderToUpdate.item.price,
-        orderTotal: orderToUpdate.total,
-        orderQty: orderToUpdate.qty,
-        storeEmail: storefront.email,
-        storeName: storefront.name,
-      });
-    } else {
-      await sendOrderConfirmEmail({
-        customerEmail: orderToUpdate.email,
-        customerName: orderToUpdate.firstName,
-        orderId: orderToUpdate._id,
-        orderItem: orderToUpdate.item.title,
-        orderItemPrice: orderToUpdate.item.price,
-        orderTotal: orderToUpdate.total,
-        orderQty: orderToUpdate.qty,
-        storeEmail: storefront.email,
-        storeName: storefront.name,
-      });
-    }
+      orderId: orderToUpdate._id,
+      orderItem: orderToUpdate.item.title,
+      orderItemPrice: orderToUpdate.item.price,
+      orderTotal: orderToUpdate.total,
+      storeEmail: storefront.email,
+      storeName: storefront.name,
+    });
 
     storefrontOwner.sellerProfile.numberOfSales += 1;
 

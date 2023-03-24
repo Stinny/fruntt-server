@@ -8,6 +8,7 @@ const {
 } = require('../utils/uploadToS3');
 const Storefront = require('../models/Storefront');
 const { validateBusAddress } = require('../utils/genShippingLabel');
+const Review = require('../models/Review');
 
 //gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
@@ -26,35 +27,31 @@ const getStoreProducts = async (req, res) => {
   let totalRating = 0;
 
   try {
-    const reviews = [];
+    const reviewsData = [];
     const productArr = await Product.find({
       storeId: storeId,
       published: true,
     }); //returns an array
 
     if (productArr.length > 0) {
-      const customers = await Customer.find({
+      const reviews = await Review.find({
         productId: productArr[0]._id,
-        reviewed: true,
       });
 
-      for (var i = 0; i < customers.length; i++) {
-        totalRating += customers[i].rating;
-        reviews.push({
-          review: customers[i].review,
-          rating: customers[i].rating,
-          customerName: `${customers[i].firstName} ${customers[i].lastName}`,
-          reviewedOn: customers[i].reviewedOn,
+      for (var i = 0; i < reviews.length; i++) {
+        totalRating += reviews[i].rating;
+        reviewsData.push({
+          review: reviews[i].review,
+          rating: reviews[i].rating,
+          reviewedOn: reviews[i].reviewedOn,
         });
       }
-
-      totalRating / customers.length;
     }
 
     return res.json({
       item: productArr.length > 0 ? productArr[0] : {},
-      reviews: reviews,
-      totalRating: totalRating,
+      reviews: reviewsData,
+      totalRating: totalRating / reviewsData.length,
     });
   } catch (err) {
     return res.status(500).json('Server error');
