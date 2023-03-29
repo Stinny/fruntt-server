@@ -52,38 +52,35 @@ const create = async (req, res) => {
   try {
     const { total, storeId, item, qty, options } = req.body;
 
+    console.log(total);
+
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
 
     const amount = Number((total * 100).toFixed(2));
 
-    //need to get the stores stripe account ID and add to paymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: 'usd',
-      automatic_payment_methods: { enabled: true },
-      on_behalf_of: storeFrontOwner.stripeId,
-      transfer_data: {
-        destination: storeFrontOwner.stripeId,
-      },
-      description: 'Fruntt - order payment',
-    });
-
     const newOrder = new Order({
-      paymentId: paymentIntent.id,
-      clientId: paymentIntent.client_secret,
       storeId: storeId,
       item: item,
       options: options,
       total: total,
     });
 
-    if (item.type === 'physical') {
-      newOrder.shipsFrom.address = item.shipsFrom.address;
-      newOrder.shipsFrom.country = item.shipsFrom.country;
-      newOrder.shipsFrom.state = item.shipsFrom.state;
-      newOrder.shipsFrom.city = item.shipsFrom.city;
-      newOrder.shipsFrom.zipcode = item.shipsFrom.zipcode;
+    if (total > 0) {
+      //need to get the stores stripe account ID and add to paymentIntent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        automatic_payment_methods: { enabled: true },
+        on_behalf_of: storeFrontOwner.stripeId,
+        transfer_data: {
+          destination: storeFrontOwner.stripeId,
+        },
+        description: 'Fruntt - order payment',
+      });
+
+      newOrder.paymentId = paymentIntent.id;
+      newOrder.clientId = paymentIntent.client_secret;
     }
 
     await newOrder.save();
@@ -135,29 +132,28 @@ const update = async (req, res) => {
 
   try {
     const orderToUpdate = await Order.findById(orderId);
-    const updateItem = await Product.findById(orderToUpdate.item._id);
-    const storefront = await Storefront.findById(orderToUpdate.storeId);
-    const storefrontOwner = await User.findById(storefront.userId);
+    const storefront = await Storefront.findById(orderToUpdate?.storeId);
+    const storefrontOwner = await User.findById(storefront?.userId);
 
     orderToUpdate.email = email;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.fulfilled = true;
 
+    if (orderToUpdate.total == 0) orderToUpdate.paid = true;
+
     await sendDigitalConfirmEmail({
       customerEmail: orderToUpdate.email,
 
-      orderId: orderToUpdate._id,
-      orderItem: orderToUpdate.item.title,
-      orderItemPrice: orderToUpdate.item.price,
-      orderTotal: orderToUpdate.total,
-      storeEmail: storefront.email,
-      storeName: storefront.name,
+      orderId: orderToUpdate?._id,
+      orderItem: orderToUpdate?.item.title,
+      orderItemPrice: orderToUpdate?.item.price,
+      orderTotal: orderToUpdate?.total,
+      storeEmail: storefront?.email,
+      storeName: storefront?.name,
     });
 
     storefrontOwner.sellerProfile.numberOfSales += 1;
 
-    // await newCustomer.save();
-    await updateItem.save();
     await storefrontOwner.save();
 
     const savedOrder = await orderToUpdate.save();
@@ -397,6 +393,7 @@ const addReview = async (req, res) => {
     });
 
     order.reviewed = true;
+    order.reviewId = newReview._id;
 
     await newReview.save();
     await order.save();
@@ -420,6 +417,18 @@ const getReviews = async (req, res) => {
   }
 };
 
+const getReview = async (req, res) => {
+  const reviewId = req.params.reviewId;
+
+  try {
+    const review = await Review.findById(reviewId);
+
+    return res.json(review);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getOrder,
   getStoreOrders,
@@ -435,4 +444,5 @@ module.exports = {
   getDigitalOrder,
   addReview,
   getReviews,
+  getReview,
 };

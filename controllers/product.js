@@ -337,9 +337,10 @@ const createDigitalProduct = async (req, res) => {
     digitalType,
     link,
     content,
+    callToAction,
+    payChoice,
+    suggestedPrice,
   } = req.body;
-
-  console.log(content);
 
   try {
     const storefront = await Storefront.findById(storeId);
@@ -358,6 +359,9 @@ const createDigitalProduct = async (req, res) => {
       link: link,
       content: content,
       type: 'digital',
+      callToAction: callToAction,
+      payChoice: payChoice,
+      suggestedPrice: suggestedPrice,
     });
 
     if (files.length) {
@@ -393,6 +397,9 @@ const editDigitalProduct = async (req, res) => {
     files,
     digitalType,
     content,
+    payChoice,
+    suggestedPrice,
+    callToAction,
   } = req.body;
   const productId = req.params.productId;
 
@@ -405,6 +412,9 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.published = published;
     productToEdit.digitalType = digitalType;
     productToEdit.content = content;
+    productToEdit.payChoice = payChoice;
+    productToEdit.suggestedPrice = suggestedPrice;
+    productToEdit.callToAction = callToAction;
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;

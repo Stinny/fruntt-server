@@ -19,21 +19,15 @@ const ProductSchema = new mongoose.Schema(
     numberOfSales: { type: Number, default: 0 },
     info: {
       type: String,
-      default:
-        '{"blocks":[{"key":"dbjri","text":"","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}',
+      default: '',
     },
     content: {
       type: String,
-      default:
-        '{"blocks":[{"key":"dbjri","text":"","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}',
+      default: '',
     },
-    shipsFrom: {
-      address: { type: String },
-      country: { type: String },
-      state: { type: String },
-      city: { type: String },
-      zipcode: { type: String },
-    },
+    callToAction: { type: 'String' },
+    payChoice: { type: Boolean, default: false },
+    suggestedPrice: { type: String },
     link: { type: String },
     faqs: [
       {
@@ -41,7 +35,6 @@ const ProductSchema = new mongoose.Schema(
         answer: { type: String },
       },
     ],
-    options: [],
     files: [
       { url: { type: String }, key: { type: String }, name: { type: String } },
     ],

@@ -43,6 +43,8 @@ router.get('/status/:orderId', orders.getOrderStatus);
 
 router.get('/reviews/:storeId', orders.getReviews);
 
+router.get('/reviews/r/:reviewId', orders.getReview);
+
 router.post('/add/review', orders.addReview);
 
 router.get('/rates/:orderId', orders.getRates);
