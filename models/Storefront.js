@@ -12,6 +12,9 @@ const StorefrontSchema = new mongoose.Schema(
     stripeOnboard: { type: Boolean, default: false },
     productAdded: { type: Boolean, default: false },
     designAdded: { type: Boolean, default: false },
+    hideDescription: { type: Boolean, default: false },
+    hideQuestions: { type: Boolean, default: false },
+    hideReviews: { type: Boolean, default: true },
     style: {
       pageBackground: { type: String, default: '#ffffff' },
       navbarBackground: { type: String, default: '#ffffff' },

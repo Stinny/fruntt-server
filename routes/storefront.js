@@ -16,7 +16,7 @@ router.get('/get/:storeId', storefront.getStorefrontById);
 
 router.post('/edit/:storeId', isTokenValid, setUser, storefront.editStyles);
 
-router.post('/delete/', isTokenValid, setUser, storefront.deleteStore);
+router.post('/delete', isTokenValid, setUser, storefront.deleteStore);
 
 router.post('/addlogo/:storeId', isTokenValid, setUser, storefront.addLogo);
 
@@ -27,5 +27,7 @@ router.post('/addsocials', isTokenValid, setUser, storefront.addSocialLinks);
 router.post('/addvisit', storefront.addVisit);
 
 router.post('/addpage', isTokenValid, setUser, storefront.addStorefront);
+
+router.post('/hidesections', isTokenValid, setUser, storefront.hideSections);
 
 module.exports = router;

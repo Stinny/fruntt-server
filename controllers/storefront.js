@@ -198,6 +198,24 @@ const addVisit = async (req, res) => {
   }
 };
 
+const hideSections = async (req, res) => {
+  const { hideDescription, hideQuestions, hideReviews, storeId } = req.body;
+
+  try {
+    const storefront = await Storefront.findById(storeId);
+
+    storefront.hideDescription = hideDescription;
+    storefront.hideReviews = hideReviews;
+    storefront.hideQuestions = hideQuestions;
+
+    await storefront.save();
+
+    return res.json('Sections updated');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 const getStoreStats = async (req, res) => {
   let revenue = 0;
   let numOfOrders = 0;
@@ -332,4 +350,5 @@ module.exports = {
   getStoreStats,
   addStorefront,
   deleteStore,
+  hideSections,
 };
