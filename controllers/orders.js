@@ -52,8 +52,6 @@ const create = async (req, res) => {
   try {
     const { total, storeId, item, qty, options } = req.body;
 
-    console.log(total);
-
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
 
