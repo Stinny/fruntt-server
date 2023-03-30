@@ -5,6 +5,7 @@ const stripe = require('stripe')(process.env.STRIPE_KEY);
 const { createSite, deleteSite, createEnv } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
 const { sendSignupEmail } = require('../email/transactional');
+const Product = require('../models/Product');
 
 const login = async (req, res) => {
   try {
@@ -375,6 +376,8 @@ const deleteAccount = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
+    const deleteStripeCus = await stripe.customers.del(user.customerId);
+
     await User.findByIdAndDelete(req.user.id);
 
     const stores = await Storefront.find({ userId: req.user.id });
@@ -384,11 +387,7 @@ const deleteAccount = async (req, res) => {
     }
 
     await Storefront.deleteMany({ userId: req.user.id });
-
-    //delete any orders
-    //delete any customers
-    //delete any products
-    //deactivate stripe subscriptions
+    await Product.deleteMany({ userId: req.user.id });
 
     return res.json('Account deleted');
   } catch (err) {
