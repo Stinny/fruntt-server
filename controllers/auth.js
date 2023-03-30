@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
-const { createSite, deleteSite } = require('../utils/netlifyApi');
+const { createSite, deleteSite, createEnv } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
 const { sendSignupEmail } = require('../email/transactional');
 
@@ -81,12 +81,6 @@ const register = async (req, res) => {
       },
     });
 
-    const stripeCustomer = await stripe.customers.create({
-      email: req.body.email,
-    });
-
-    newUser.customerId = stripeCustomer.id;
-
     //create the new storefront mongo doc
     const storeFront = new Storefront({
       userId: newUser._id,
@@ -107,6 +101,12 @@ const register = async (req, res) => {
 
     const accessToken = newUser.genAccessToken();
     const refreshToken = newUser.genRefreshToken();
+
+    const stripeCustomer = await stripe.customers.create({
+      email: req.body.email,
+    });
+
+    newUser.customerId = stripeCustomer.id;
 
     await sendSignupEmail(req.body.email, newUser._id);
 
