@@ -34,6 +34,7 @@ const UserSchema = new mongoose.Schema(
       instagram: { type: String, default: '' },
       twitter: { type: String, default: '' },
       tiktok: { type: String, default: '' },
+      linkedin: {type: String, default: ''},
       picture: {
         url: { type: String },
         key: { type: String },

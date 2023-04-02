@@ -57,6 +57,7 @@ const getStorefrontById = async (req, res) => {
         facebook: storeOwner.sellerProfile.facebook,
         youtube: storeOwner.sellerProfile.youtube,
         twitter: storeOwner.sellerProfile.twitter,
+        linkedin: storeOwner.sellerProfile.linkedin,
         tikok: storeOwner.sellerProfile.tiktok,
         profilePic: storeOwner.sellerProfile.picture.url,
         numberOfSales: successfulOrders.length,
@@ -220,7 +221,7 @@ const getStoreStats = async (req, res) => {
   let revenue = 0;
   let numOfOrders = 0;
   let numOfUnfulfilledOrders = 0;
-  let dataSet = [];
+  let dataSet = { labels: [], dataSet: [] };
 
   try {
     const orders = await Order.find({
@@ -232,18 +233,17 @@ const getStoreStats = async (req, res) => {
     const visits = await Visit.find({ storeId: req.params.storeId });
 
     for (var x = 0; x < orders.length; x++) {
-      revenue += orders[x].total;
       numOfOrders += 1;
-      let daysTotal = 0;
-      let orderedOn = moment(orders[x].placedOn).format('MM/DD/YYYY');
-
-      for (var i = 0; i < orders.length; i++) {
-        if (orders[i].placedOn === orderedOn) daysTotal += orders[i].total;
+      let orderDate = moment(orders[0].placedOn).format('YYYYMMDD');
+      console.log(orderDate);
+      for (var y = 0; y < orders.length; y++) {
+        if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
+          console.log(orders[y].placedon);
       }
 
-      dataSet.push({ date: orders[x].placedOn, daysTotal: daysTotal });
-
-      if (orders[x].fulfilled === false) numOfUnfulfilledOrders += 1;
+      orderDate += 1;
+      dataSet.dataSet.push(orders[x].total);
+      dataSet.labels.push(orders[x].placedOn);
     }
 
     return res.json({

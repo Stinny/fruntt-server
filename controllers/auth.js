@@ -245,6 +245,7 @@ const updateSellerProfile = async (req, res) => {
     twitter,
     instagram,
     tiktok,
+    linkedin,
     profilePicUrl,
     profilePicKey,
   } = req.body;
@@ -258,6 +259,7 @@ const updateSellerProfile = async (req, res) => {
     user.sellerProfile.youtube = youtube;
     user.sellerProfile.twitter = twitter;
     user.sellerProfile.tiktok = tiktok;
+    user.sellerProfile.linkedin = linkedin;
     user.sellerProfile.picture.url = profilePicUrl;
     user.sellerProfile.picture.key = profilePicKey;
     user.firstName = firstName;
