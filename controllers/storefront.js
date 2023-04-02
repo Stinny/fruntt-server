@@ -232,19 +232,18 @@ const getStoreStats = async (req, res) => {
     const product = await Product.find({ storeId: req.params.storeId });
     const visits = await Visit.find({ storeId: req.params.storeId });
 
-    for (var x = 0; x < orders.length; x++) {
-      numOfOrders += 1;
-      let orderDate = moment(orders[0].placedOn).format('YYYYMMDD');
-      console.log(orderDate);
-      for (var y = 0; y < orders.length; y++) {
-        if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
-          console.log(orders[y].placedon);
-      }
+    // for (var x = 0; x < orders.length; x++) {
+    //   numOfOrders += 1;
+    //   let orderDate = moment(orders[0].placedOn).format('YYYYMMDD');
+    //   for (var y = 0; y < orders.length; y++) {
+    //     if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
+    //       console.log(orders[y].placedon);
+    //   }
 
-      orderDate += 1;
-      dataSet.dataSet.push(orders[x].total);
-      dataSet.labels.push(orders[x].placedOn);
-    }
+    //   orderDate += 1;
+    //   dataSet.dataSet.push(orders[x].total);
+    //   dataSet.labels.push(orders[x].placedOn);
+    // }
 
     return res.json({
       revenue: revenue,
