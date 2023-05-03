@@ -236,8 +236,8 @@ const getStoreStats = async (req, res) => {
       numOfOrders += 1;
       let orderDate = moment(orders[0].placedOn).format('YYYYMMDD');
       for (var y = 0; y < orders.length; y++) {
-        if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
-          console.log(orders[y].placedon);
+        // if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
+        //   // console.log(orders[y].placedOn);
       }
 
       orderDate += 1;

@@ -4,7 +4,10 @@ const Storefront = require('../models/Storefront');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 const { createSite, deleteSite, createEnv } = require('../utils/netlifyApi');
 const jwt = require('jsonwebtoken');
-const { sendSignupEmail } = require('../email/transactional');
+const {
+  sendSignupEmail,
+  sendPasswordResetEmail,
+} = require('../email/transactional');
 const Product = require('../models/Product');
 
 const login = async (req, res) => {
@@ -397,6 +400,61 @@ const deleteAccount = async (req, res) => {
   }
 };
 
+const sendPasswordReset = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const token = jwt.sign({ email: email }, process.env.JWT_SEC, {
+      expiresIn: '30m',
+    });
+
+    console.log(token);
+
+    //send email with token
+    await sendPasswordResetEmail(email, token);
+
+    return res.json('Email sent');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const checkResetToken = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    jwt.verify(token, process.env.JWT_SEC, (err, user) => {
+      if (err) return res.json({ valid: false });
+
+      return res.json({ valid: true, email: user.email });
+    });
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email: email });
+
+    //creates salt
+    //then creates the hash from salt and password
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    user.password = hash;
+
+    await user.save();
+
+    return res.json('Password reset');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -412,4 +470,7 @@ module.exports = {
   deletePaymentMethod,
   updateSellerProfile,
   deleteAccount,
+  sendPasswordReset,
+  checkResetToken,
+  resetPassword,
 };
