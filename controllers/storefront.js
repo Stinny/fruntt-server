@@ -10,6 +10,7 @@ const {
   deleteSite,
   updateSiteName,
   createEnv,
+  updateEnv,
 } = require('../utils/netlifyApi');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
@@ -70,16 +71,15 @@ const getStorefrontById = async (req, res) => {
   }
 };
 
-const addLogo = async (req, res) => {
+const changeName = async (req, res) => {
   const storeId = req.params.storeId;
 
   try {
     const storefrontToEdit = await Storefront.findById(storeId);
+    const storesWithSameName = await Storefront.find({ name: req.body.name });
 
-    if (req.body.logoUrl !== '' && req.body.logoKey !== '') {
-      storefrontToEdit.logo.url = req.body.logoUrl;
-      storefrontToEdit.logo.key = req.body.logoKey;
-    }
+    if (storesWithSameName.length) return res.json({ msg: 'Name in use' });
+
     storefrontToEdit.name = req.body.name;
     storefrontToEdit.url = `https://${req.body.name}.fruntt.com`;
 
@@ -88,8 +88,13 @@ const addLogo = async (req, res) => {
       storeName: req.body.name,
     });
 
+    await updateEnv({
+      siteId: storefrontToEdit?.siteId,
+      storeName: req.body.name,
+    });
+
     await storefrontToEdit.save();
-    return res.json('Logo added');
+    return res.json({ msg: 'Name changed' });
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
@@ -221,7 +226,7 @@ const getStoreStats = async (req, res) => {
   let revenue = 0;
   let numOfOrders = 0;
   let numOfUnfulfilledOrders = 0;
-  let dataSet = { labels: [], dataSet: [] };
+  let dataSet = [];
 
   try {
     const orders = await Order.find({
@@ -234,15 +239,38 @@ const getStoreStats = async (req, res) => {
 
     for (var x = 0; x < orders.length; x++) {
       numOfOrders += 1;
-      let orderDate = moment(orders[0].placedOn).format('YYYYMMDD');
-      for (var y = 0; y < orders.length; y++) {
-        // if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
-        //   // console.log(orders[y].placedOn);
-      }
+      //   let orderDate = moment(orders[0].placedOn).format('mmddyy');
+      //   // for (var y = 0; y < orders.length; y++) {
+      //   //   // if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
+      //   //   //   // console.log(orders[y].placedOn);
 
-      orderDate += 1;
-      dataSet.dataSet.push(orders[x].total);
-      dataSet.labels.push(orders[x].placedOn);
+      //   // }
+      //   // dataSet.push({
+      //   //   total: orders[x].total,
+      //   //   orderedOn: moment(orders[x].placedOn).format('LL'),
+      //   // });
+      //   dataSet.push(orders[x].total);
+      //   console.log(orders[x].placedOn.toDateString());
+    }
+
+    //place orders in groups by dates
+    var ordersByDate = {};
+    orders.forEach(function (order) {
+      var date = order.placedOn.toDateString();
+      if (!ordersByDate[date]) {
+        ordersByDate[date] = [];
+      }
+      ordersByDate[date].push(order);
+    });
+
+    var dates = [];
+    var totals = [];
+    for (var date in ordersByDate) {
+      dates.push(date);
+      var total = ordersByDate[date].reduce(function (sum, order) {
+        return sum + order.total;
+      }, 0);
+      totals.push(total);
     }
 
     return res.json({
@@ -252,7 +280,10 @@ const getStoreStats = async (req, res) => {
       visits: visits.length,
       conversion: (numOfOrders / visits.length) * 100,
       itemStock: product.length ? product[0].stock : 0,
-      dataSet: dataSet,
+      dataSet: {
+        dates: dates,
+        totals: totals,
+      },
     });
   } catch (err) {
     console.log(err);
@@ -342,7 +373,7 @@ module.exports = {
   getStorefront,
   getStorefrontById,
   editStyles,
-  addLogo,
+  changeName,
   deleteLogo,
   addSocialLinks,
   addVisit,

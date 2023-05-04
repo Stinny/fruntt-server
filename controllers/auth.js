@@ -408,8 +408,6 @@ const sendPasswordReset = async (req, res) => {
       expiresIn: '30m',
     });
 
-    console.log(token);
-
     //send email with token
     await sendPasswordResetEmail(email, token);
 

@@ -49,7 +49,7 @@ const createSite = async (storeName, storeId) => {
 };
 
 //creates the env vars needed for operation
-const createEnv = async ({ storeId, storeName, siteId, deployId }) => {
+const createEnv = async ({ storeId, storeName, siteId }) => {
   const body = [
     {
       key: 'REACT_APP_STORE_NAME',
@@ -79,6 +79,22 @@ const createEnv = async ({ storeId, storeName, siteId, deployId }) => {
   const build = await netlifyReq.post(`/sites/${siteId}/builds`);
 };
 
+const updateEnv = async ({ storeName, siteId }) => {
+  const body = {
+    key: 'REACT_APP_STORE_NAME',
+    scopes: ['builds', 'functions', 'runtime', 'post-processing'],
+    values: [{ value: storeName, context: 'all' }],
+  };
+
+  const updateEnv = await netlifyReq.put(
+    `/accounts/stinny/env/REACT_APP_STORE_NAME?site_id=${siteId}`,
+    body
+  );
+
+  //create a site build here
+  const build = await netlifyReq.post(`/sites/${siteId}/builds`);
+};
+
 //creates site using netlify API
 const updateSiteName = async ({ storeName, siteId }) => {
   const body = {
@@ -96,4 +112,10 @@ const deleteSite = async ({ siteId }) => {
 
   return site.data;
 };
-module.exports = { createSite, createEnv, updateSiteName, deleteSite };
+module.exports = {
+  createSite,
+  createEnv,
+  updateEnv,
+  updateSiteName,
+  deleteSite,
+};

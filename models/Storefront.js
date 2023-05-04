@@ -6,6 +6,7 @@ const StorefrontSchema = new mongoose.Schema(
     stripeId: { type: String, default: '' },
     name: { type: String, required: true, unique: true },
     siteId: { type: String },
+    nameEnvId: { type: String },
     url: { type: String },
     visits: { type: Number, default: 0 },
     lastEdited: { type: Date },
