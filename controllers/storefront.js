@@ -398,8 +398,6 @@ const getStoreStats = async (req, res) => {
   const dates = [];
   const totals = [];
 
-  console.log(req.params.storeId);
-
   try {
     switch (view) {
       case 'today':

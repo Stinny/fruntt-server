@@ -593,7 +593,6 @@ const twitterRegister = async (req, res) => {
                 // You can store it in your database or use it as needed
 
                 // Send a JSON response with the profile data
-                console.log(profileData);
 
                 //checks if email is already in use
                 const emailInUse = await User.find({

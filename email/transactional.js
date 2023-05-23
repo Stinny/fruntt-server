@@ -115,7 +115,6 @@ const sendOrderFulfilledEmail = async ({
 };
 
 const sendPasswordResetEmail = async (email, token) => {
-  console.log(token);
   await client.sendEmailWithTemplate({
     From: `support@fruntt.com`,
     To: email,
