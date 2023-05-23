@@ -9,10 +9,26 @@ const {
   sendPasswordResetEmail,
 } = require('../email/transactional');
 const Product = require('../models/Product');
+const Oauth = require('oauth');
+const Twitter = require('twitter');
+
+//for twitter oauth
+const oauth = new Oauth.OAuth(
+  'https://api.twitter.com/oauth/request_token',
+  'https://api.twitter.com/oauth/access_token',
+  process.env.TWITTER_API,
+  process.env.TWITTER_SEC,
+  '1.0A',
+  null,
+  'HMAC-SHA1'
+);
 
 const login = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({
+      email: req.body.email,
+      twitterAuth: false,
+    });
     // const user2 = await User.find({ email: req.body.email });
     // conosle.log(user2);
     if (!user) return res.status(400).json('Invalid credentials try again');
@@ -73,16 +89,7 @@ const register = async (req, res) => {
     //create the new user mongo doc
     const newUser = new User({
       email: req.body.email,
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
       password: hash,
-      sellerProfile: {
-        bio: req.body.bio,
-        picture: {
-          url: req.body.profilePicUrl,
-          key: req.body.profilePicKey,
-        },
-      },
     });
 
     //create the new storefront mongo doc
@@ -453,6 +460,228 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const twitterAuth = (req, res) => {
+  const type = req.params.type;
+
+  const requestParams = {
+    include_email: true,
+  };
+
+  oauth.getOAuthRequestToken(
+    requestParams,
+    (error, oauthToken, oauthTokenSecret, results) => {
+      if (error) {
+        console.error('Error getting OAuth request token:', error);
+        res.status(500).send('Error getting OAuth request token');
+      } else {
+        // Save the obtained oauthToken and oauthTokenSecret to be used in the callback route
+        // req.session.oauthToken = oauthToken;
+        // req.session.oauthTokenSecret = oauthTokenSecret;
+
+        // Redirect the user to the Twitter authorization URL
+        res.json({
+          url: `https://api.twitter.com/oauth/authorize?oauth_token=${oauthToken}`,
+          oauthSecret: oauthTokenSecret,
+          type: type,
+        });
+      }
+    }
+  );
+};
+
+const twitterLogin = async (req, res) => {
+  const { oauthToken, oauthSecret, oauthVerifier } = req.body;
+
+  oauth.getOAuthAccessToken(
+    oauthToken,
+    oauthSecret,
+    oauthVerifier,
+    (error, accessToken, accessTokenSecret) => {
+      if (error) {
+        console.log(error);
+      } else {
+        const client = new Twitter({
+          consumer_key: process.env.TWITTER_API,
+          consumer_secret: process.env.TWITTER_SEC,
+          access_token_key: accessToken,
+          access_token_secret: accessTokenSecret,
+        });
+
+        const profileParams = {
+          include_email: true, // Add this parameter to include the email address in the profile data
+        };
+
+        client.get(
+          'account/verify_credentials',
+          profileParams,
+          async (error, profileData, response) => {
+            if (error) {
+              console.error('Error fetching user profile data:', error);
+              res.status(500).send('Error fetching user profile data');
+            } else {
+              //see if user exists via twitter auth
+              const user = await User.findOne({
+                email: profileData?.email,
+                twitterAuth: true,
+              });
+
+              if (!user)
+                return res.status(400).json('That account does not exist');
+
+              const accessToken = user.genAccessToken();
+              const refreshToken = user.genRefreshToken();
+
+              const { password, ...otherInfo } = user._doc;
+
+              const storeFront = await Storefront.findOne({ userId: user._id });
+              const stores = await Storefront.find({ userId: user._id });
+
+              let storeIds = [];
+              for (var i = 0; i < stores.length; i++) {
+                storeIds.push({ id: stores[i]._id, url: stores[i].url });
+              }
+
+              return res.json({
+                accessToken,
+                refreshToken,
+                userInfo: {
+                  ...otherInfo,
+                  store: storeFront ? storeFront._doc : {},
+                  storeIds: storeIds,
+                },
+              });
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
+const twitterRegister = async (req, res) => {
+  const { oauthToken, oauthSecret, oauthVerifier, storeName } = req.body;
+
+  try {
+    oauth.getOAuthAccessToken(
+      oauthToken,
+      oauthSecret,
+      oauthVerifier,
+      (error, accessToken, accessTokenSecret) => {
+        if (error) {
+          console.log(error);
+        } else {
+          const client = new Twitter({
+            consumer_key: process.env.TWITTER_API,
+            consumer_secret: process.env.TWITTER_SEC,
+            access_token_key: accessToken,
+            access_token_secret: accessTokenSecret,
+          });
+
+          const profileParams = {
+            include_email: true, // Add this parameter to include the email address in the profile data
+          };
+
+          client.get(
+            'account/verify_credentials',
+            profileParams,
+            async (error, profileData, response) => {
+              if (error) {
+                console.error('Error fetching user profile data:', error);
+                res.status(500).send('Error fetching user profile data');
+              } else {
+                // Now you have the user's profile data
+                // You can store it in your database or use it as needed
+
+                // Send a JSON response with the profile data
+                console.log(profileData);
+
+                //checks if email is already in use
+                const emailInUse = await User.find({
+                  email: profileData?.email,
+                });
+                if (emailInUse.length)
+                  return res.status(400).json({
+                    error: 'Email already in use',
+                  });
+
+                //check if store name is already in use
+                const storeNameInUse = await Storefront.find({
+                  name: storeName,
+                });
+                if (storeNameInUse.length)
+                  return res.status(400).json({
+                    error: 'Storefront name already in use',
+                  });
+
+                //create the new user mongo doc
+                const newUser = new User({
+                  email: profileData.email,
+                  twitterAuth: true,
+                  twitterId: profileData?.id,
+                  emailConfirmed: true,
+                  name: profileData?.name,
+                });
+
+                newUser.sellerProfile.picture.url =
+                  profileData?.profile_image_url_https;
+
+                // //create the new storefront mongo doc
+                // const storeFront = new Storefront({
+                //   userId: newUser._id,
+                //   name: req.body.storeName,
+                // });
+
+                // newUser.storeId = storeFront._id;
+                newUser.sellerProfile.twitter = `https://twitter.com/${profileData?.screen_name}`;
+
+                // const deployStore = await createSite(
+                //   req.body.storeName,
+                //   storeFront._id
+                // );
+
+                // const createEnvs = await createEnv({
+                //   storeName: req.body.storeName,
+                //   storeId: storeFront._id,
+                //   siteId: deployStore.id,
+                // });
+
+                // storeFront.url = deployStore.url;
+                // storeFront.siteId = deployStore.id;
+
+                const accessToken = newUser.genAccessToken();
+                const refreshToken = newUser.genRefreshToken();
+
+                const stripeCustomer = await stripe.customers.create({
+                  email: profileData?.email,
+                });
+
+                newUser.customerId = stripeCustomer.id;
+
+                //deconstructs the newUser doc so we don't return the password
+                const { password, ...otherInfo } = newUser._doc;
+
+                await newUser.save();
+
+                return res.json({
+                  accessToken,
+                  refreshToken,
+                  userInfo: {
+                    ...otherInfo,
+                    store: {},
+                    storeIds: [],
+                  },
+                });
+              }
+            }
+          );
+        }
+      }
+    );
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -471,4 +700,7 @@ module.exports = {
   sendPasswordReset,
   checkResetToken,
   resetPassword,
+  twitterAuth,
+  twitterLogin,
+  twitterRegister,
 };

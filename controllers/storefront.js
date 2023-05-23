@@ -222,11 +222,10 @@ const hideSections = async (req, res) => {
   }
 };
 
-const getStoreStats = async (req, res) => {
+const getStoreStatsss = async (req, res) => {
   let revenue = 0;
   let numOfOrders = 0;
   let numOfUnfulfilledOrders = 0;
-  let dataSet = [];
 
   try {
     const orders = await Order.find({
@@ -239,39 +238,60 @@ const getStoreStats = async (req, res) => {
 
     for (var x = 0; x < orders.length; x++) {
       numOfOrders += 1;
-      //   let orderDate = moment(orders[0].placedOn).format('mmddyy');
-      //   // for (var y = 0; y < orders.length; y++) {
-      //   //   // if (moment(orders[y].placedOn).format('YYYYMMDD') === orderDate)
-      //   //   //   // console.log(orders[y].placedOn);
-
-      //   // }
-      //   // dataSet.push({
-      //   //   total: orders[x].total,
-      //   //   orderedOn: moment(orders[x].placedOn).format('LL'),
-      //   // });
-      //   dataSet.push(orders[x].total);
-      //   console.log(orders[x].placedOn.toDateString());
     }
 
-    //place orders in groups by dates
-    var ordersByDate = {};
-    orders.forEach(function (order) {
-      var date = order.placedOn.toDateString();
-      if (!ordersByDate[date]) {
-        ordersByDate[date] = [];
-      }
-      ordersByDate[date].push(order);
+    // Get an array of dates for the past 7 days in reverse order
+    const currentDate = new Date();
+    const pastWeekDates = [];
+    for (let i = 6; i >= 0; i--) {
+      const pastDate = new Date();
+      pastDate.setDate(currentDate.getDate() - i);
+      pastWeekDates.push(pastDate);
+    }
+
+    const dates = [];
+    const totals = [];
+
+    // Loop through the dates and gather the totals
+    pastWeekDates.forEach((date) => {
+      const dateString = date.toDateString();
+      dates.push(dateString);
+      totals.push(0);
     });
 
-    var dates = [];
-    var totals = [];
-    for (var date in ordersByDate) {
-      dates.push(date);
-      var total = ordersByDate[date].reduce(function (sum, order) {
-        return sum + order.total;
-      }, 0);
-      totals.push(total);
+    const pastOrders = await Order.find({
+      placedOn: { $gte: pastWeekDates[0] },
+    });
+
+    for (var z = 0; z < pastOrders.length; z++) {
+      const dateString = pastOrders[z].placedOn.toISOString().split('T')[0];
+      const index = dates.indexOf(dateString);
+      if (index !== -1) {
+        totals[index] += pastOrders[z].total;
+      }
     }
+
+    console.log(dates, totals);
+
+    // //place orders in groups by dates
+    // var ordersByDate = {};
+    // orders.forEach(function (order) {
+    //   var date = order.placedOn.toDateString();
+    //   if (!ordersByDate[date]) {
+    //     ordersByDate[date] = [];
+    //   }
+    //   ordersByDate[date].push(order);
+    // });
+
+    // var dates = [];
+    // var totals = [];
+    // for (var date in ordersByDate) {
+    //   dates.push(date);
+    //   var total = ordersByDate[date].reduce(function (sum, order) {
+    //     return sum + order.total;
+    //   }, 0);
+    //   totals.push(total);
+    // }
 
     return res.json({
       revenue: revenue,
@@ -363,6 +383,256 @@ const deleteStore = async (req, res) => {
       storefront: stores[0],
       storeIds: storeIds,
     });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+//gets the stats for past seven days
+const getStoreStats = async (req, res) => {
+  const view = req.params.view;
+  let revenue = 0;
+  let numOfOrders = 0;
+
+  const dates = [];
+  const totals = [];
+
+  console.log(req.params.storeId);
+
+  try {
+    switch (view) {
+      case 'today':
+        // Get the current date
+        const todaysDate = new Date();
+        // Set the start and end of the day
+        const startOfDay = new Date(
+          todaysDate.getFullYear(),
+          todaysDate.getMonth(),
+          todaysDate.getDate()
+        );
+        const endOfDay = new Date(
+          todaysDate.getFullYear(),
+          todaysDate.getMonth(),
+          todaysDate.getDate() + 1
+        );
+
+        //get visits for today
+        const todaysVisits = await Visit.find({
+          storeId: req.params.storeId,
+          visitedOn: { $gte: startOfDay, $lt: endOfDay },
+        });
+
+        // Query orders for the current day
+        const todaysOrders = await Order.find({
+          placedOn: {
+            $gte: startOfDay,
+            $lt: endOfDay,
+          },
+          paid: true,
+          storeId: req.params.storeId,
+        });
+
+        for (var j = 0; j < todaysOrders.length; j++) {
+          revenue += todaysOrders[j].total;
+          numOfOrders++;
+        }
+
+        dates.push(todaysDate.toDateString());
+        totals.push(revenue);
+
+        return res.json({
+          revenue: revenue,
+          numOfOrders: numOfOrders,
+
+          visits: todaysVisits.length,
+          conversion: (numOfOrders / todaysVisits.length) * 100,
+
+          dataSet: {
+            dates: dates,
+            totals: totals,
+          },
+        });
+
+      case 'seven':
+        //get orders for the past 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        //get visits for past 7 days
+        const visits = await Visit.find({
+          storeId: req.params.storeId,
+          visitedOn: { $gte: sevenDaysAgo },
+        });
+
+        //calculate revenue and num of orders
+        const pastOrders = await Order.find({
+          storeId: req.params.storeId,
+          placedOn: { $gte: sevenDaysAgo },
+          paid: true,
+        });
+        for (var x = 0; x < pastOrders.length; x++) {
+          revenue += pastOrders[x].total;
+          numOfOrders++;
+        }
+
+        // Get an array of dates for the past 7 days in reverse order
+        const currentDate = new Date();
+        const pastWeekDates = [];
+        for (let i = 6; i >= 0; i--) {
+          const pastDate = new Date();
+          pastDate.setDate(currentDate.getDate() - i);
+          pastWeekDates.push(pastDate);
+        }
+
+        // Loop through the dates and gather the totals
+        pastWeekDates.forEach((date) => {
+          const dateString = date.toDateString();
+          dates.push(dateString);
+          totals.push(0);
+        });
+
+        const ordersForTotals = await Order.find({
+          storeId: req.params.storeId,
+          placedOn: { $gte: pastWeekDates[0] },
+          paid: true,
+        });
+
+        for (var z = 0; z < ordersForTotals.length; z++) {
+          const dateString = ordersForTotals[z].placedOn
+            .toISOString()
+            .split('T')[0];
+          const index = dates.indexOf(dateString);
+          if (index !== -1) {
+            totals[index] += ordersForTotals[z].total;
+          }
+        }
+        return res.json({
+          revenue: revenue,
+          numOfOrders: numOfOrders,
+
+          visits: visits.length,
+          conversion: (numOfOrders / visits.length) * 100,
+
+          dataSet: {
+            dates: dates,
+            totals: totals,
+          },
+        });
+      case 'thirty':
+        //get orders for the past 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        //get visits for past 30 days
+        const visitsPast30 = await Visit.find({
+          storeId: req.params.storeId,
+          visitedOn: { $gte: thirtyDaysAgo },
+        });
+
+        //calculate revenue and num of orders
+        const past30Orders = await Order.find({
+          placedOn: { $gte: thirtyDaysAgo },
+          storeId: req.params.storeId,
+        });
+        for (var x = 0; x < past30Orders.length; x++) {
+          revenue += past30Orders[x].total;
+          numOfOrders++;
+        }
+
+        // Get an array of dates for the past 30 days in reverse order
+        const dateNow = new Date();
+        const past30Dates = [];
+        for (let i = 29; i >= 0; i--) {
+          const pastDate = new Date();
+          pastDate.setDate(dateNow.getDate() - i);
+          past30Dates.push(pastDate);
+        }
+
+        // Loop through the dates and gather the totals
+        past30Dates.forEach((date) => {
+          const dateString = date.toDateString();
+          dates.push(dateString);
+          totals.push(0);
+        });
+
+        const ordersFor30Totals = await Order.find({
+          storeId: req.params.storeId,
+          placedOn: { $gte: past30Dates[0] },
+          paid: true,
+        });
+
+        for (var z = 0; z < ordersFor30Totals.length; z++) {
+          const dateString = ordersFor30Totals[z].placedOn
+            .toISOString()
+            .split('T')[0];
+          const index = dates.indexOf(dateString);
+          if (index !== -1) {
+            totals[index] += ordersFor30Totals[z].total;
+          }
+        }
+        return res.json({
+          revenue: revenue,
+          numOfOrders: numOfOrders,
+
+          visits: visitsPast30.length,
+          conversion: (numOfOrders / visitsPast30.length) * 100,
+
+          dataSet: {
+            dates: dates,
+            totals: totals,
+          },
+        });
+      case 'all':
+        //get visits for today
+        const allVisits = await Visit.find({
+          storeId: req.params.storeId,
+        });
+
+        const allOrders = await Order.find({
+          storeId: req.params.storeId,
+          paid: true,
+        });
+
+        for (var w = 0; w < allOrders.length; w++) {
+          revenue += allOrders[w].total;
+          numOfOrders++;
+        }
+
+        // 6. Group the orders by the date they were placed.
+        var ordersByDate = {};
+        allOrders.forEach(function (order) {
+          console.log(order.total);
+          var date = order.placedOn.toDateString();
+          if (!ordersByDate[date]) {
+            ordersByDate[date] = [];
+          }
+          ordersByDate[date].push(order);
+        });
+
+        // 7. For each date group, calculate the total order amount.
+
+        for (var date in ordersByDate) {
+          dates.push(date);
+          var total = ordersByDate[date].reduce(function (sum, order) {
+            return sum + order.total;
+          }, 0);
+          totals.push(total);
+        }
+
+        return res.json({
+          revenue: revenue,
+          numOfOrders: numOfOrders,
+          visits: allVisits.length,
+          conversion: (numOfOrders / allVisits.length) * 100,
+          dataSet: {
+            dates: dates,
+            totals: totals,
+          },
+        });
+      default:
+        return;
+    }
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');

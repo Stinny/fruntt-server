@@ -4,9 +4,8 @@ const jwt = require('jsonwebtoken');
 const UserSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true },
-    firstName: { type: String },
-    lastName: { type: String },
-    password: { type: String, required: true },
+    name: { type: String },
+    password: { type: String },
     storeId: { type: String },
     stripeId: { type: String, default: '' },
     customerId: { type: String },
@@ -21,6 +20,8 @@ const UserSchema = new mongoose.Schema(
     sendReviewCollected: { type: Boolean, default: true },
     emailConfirmed: { type: Boolean, default: false },
     paymentAdded: { type: Boolean, default: false },
+    twitterAuth: { type: Boolean, default: false },
+    twitterId: { type: String },
     paymentMethod: {
       id: { type: String },
       brand: { type: String },
@@ -34,7 +35,7 @@ const UserSchema = new mongoose.Schema(
       instagram: { type: String, default: '' },
       twitter: { type: String, default: '' },
       tiktok: { type: String, default: '' },
-      linkedin: {type: String, default: ''},
+      linkedin: { type: String, default: '' },
       picture: {
         url: { type: String },
         key: { type: String },

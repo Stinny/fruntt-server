@@ -6,7 +6,7 @@ const isTokenValid = require('../middleware/verifyToken');
 router.get('/store/:storeId', isTokenValid, setUser, storefront.getStorefront);
 
 router.get(
-  '/storestats/:storeId',
+  '/storestats/:storeId/:view',
   isTokenValid,
   setUser,
   storefront.getStoreStats

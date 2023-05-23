@@ -37,5 +37,7 @@ router.post('/deleteaccount', isTokenValid, setUser, auth.deleteAccount);
 router.post('/sendresetemail', auth.sendPasswordReset);
 router.post('/checkresettoken', auth.checkResetToken);
 router.post('/resetpassword', auth.resetPassword);
-
+router.get('/twitter/:type', auth.twitterAuth);
+router.post('/twitter/login', auth.twitterLogin);
+router.post('/twitter/register', auth.twitterRegister);
 module.exports = router;
