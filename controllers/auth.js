@@ -247,8 +247,7 @@ const updateAccountInfo = async (req, res) => {
 
 const updateSellerProfile = async (req, res) => {
   const {
-    firstName,
-    lastName,
+    name,
     bio,
     facebook,
     youtube,
@@ -272,8 +271,7 @@ const updateSellerProfile = async (req, res) => {
     user.sellerProfile.linkedin = linkedin;
     user.sellerProfile.picture.url = profilePicUrl;
     user.sellerProfile.picture.key = profilePicKey;
-    user.firstName = firstName;
-    user.lastName = lastName;
+    user.name = name;
 
     await user.save();
 

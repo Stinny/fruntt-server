@@ -51,8 +51,7 @@ const getStorefrontById = async (req, res) => {
       storefront: storefront,
       stripeOnboard: storeOwner.stripeOnboard,
       sellerProfile: {
-        firstName: storeOwner.firstName,
-        lastName: storeOwner.lastName,
+        name: storeOwner.name,
         bio: storeOwner.sellerProfile.bio,
         instagram: storeOwner.sellerProfile.instagram,
         facebook: storeOwner.sellerProfile.facebook,
