@@ -59,6 +59,7 @@ const getStorefrontById = async (req, res) => {
         twitter: storeOwner.sellerProfile.twitter,
         linkedin: storeOwner.sellerProfile.linkedin,
         tikok: storeOwner.sellerProfile.tiktok,
+        link: storeOwner.sellerProfile.link,
         profilePic: storeOwner.sellerProfile.picture.url,
         numberOfSales: successfulOrders.length,
       },
