@@ -13,6 +13,7 @@ const {
   sendOrderConfirmEmail,
   sendOrderFulfilledEmail,
   sendDigitalConfirmEmail,
+  sendOrderPlacedEmail,
 } = require('../email/transactional');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
@@ -148,6 +149,12 @@ const update = async (req, res) => {
       orderTotal: orderToUpdate?.total,
       storeEmail: storefront?.email,
       storeName: storefront?.name,
+    });
+
+    await sendOrderPlacedEmail({
+      email: storefrontOwner?.email,
+      total: orderToUpdate?.total,
+      title: orderToUpdate?.item?.title,
     });
 
     storefrontOwner.sellerProfile.numberOfSales += 1;

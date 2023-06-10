@@ -125,6 +125,18 @@ const sendPasswordResetEmail = async (email, token) => {
   });
 };
 
+const sendOrderPlacedEmail = async (email, total, title) => {
+  await client.sendEmailWithTemplate({
+    From: `support@fruntt.com`,
+    To: email,
+    TemplateAlias: 'orderPlaced',
+    TemplateModel: {
+      orderTotal: total,
+      orderItemTitle: title,
+    },
+  });
+};
+
 module.exports = {
   sendSignupEmail,
   sendReviewLinkEmail,
@@ -132,4 +144,5 @@ module.exports = {
   sendOrderFulfilledEmail,
   sendDigitalConfirmEmail,
   sendPasswordResetEmail,
+  sendOrderPlacedEmail,
 };
