@@ -216,14 +216,11 @@ const getOnboardUrl = async (req, res) => {
 const disconnectStripe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const storefront = await Storefront.findById(req.user.storeId);
 
     user.stripeOnboard = false;
     user.stripeId = '';
-    storefront.stripeId = '';
 
     await user.save();
-    await storefront.save();
     res.json('Stripe disconnected');
   } catch (err) {
     res.status(500).json('Server error');
