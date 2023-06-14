@@ -51,16 +51,17 @@ const getStoreOrders = async (req, res) => {
 //creates order
 const create = async (req, res) => {
   try {
-    const { total, storeId, item, qty, options } = req.body;
+    const { total, storeId, item, options } = req.body;
 
     const storeFront = await Storefront.findById(storeId);
     const storeFrontOwner = await User.findById(storeFront.userId);
+    const itemWithContent = await Product.findById(item._id);
 
     const amount = Number((total * 100).toFixed(2));
 
     const newOrder = new Order({
       storeId: storeId,
-      item: item,
+      item: itemWithContent,
       options: options,
       total: total,
     });
@@ -124,7 +125,7 @@ const updateOrderAmount = async (req, res) => {
   }
 };
 
-//upodates an order with final data
+//updates an order with final data
 const update = async (req, res) => {
   const orderId = req.params.orderId;
   const { email } = req.body;

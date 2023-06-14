@@ -28,14 +28,15 @@ const getStoreProducts = async (req, res) => {
 
   try {
     const reviewsData = [];
-    const productArr = await Product.find({
+
+    const product = await Product.findOne({
       storeId: storeId,
       published: true,
-    }); //returns an array
+    }); //returns one
 
-    if (productArr.length > 0) {
+    if (product) {
       const reviews = await Review.find({
-        productId: productArr[0]._id,
+        productId: product._id,
       });
 
       for (var i = 0; i < reviews.length; i++) {
@@ -47,14 +48,22 @@ const getStoreProducts = async (req, res) => {
           reviewedOn: reviews[i].reviewedOn,
         });
       }
-    }
+      const { content, files, ...filteredProduct } = product._doc;
 
-    return res.json({
-      item: productArr.length > 0 ? productArr[0] : {},
-      reviews: reviewsData,
-      totalRating: totalRating / reviewsData.length,
-    });
+      return res.json({
+        item: filteredProduct,
+        reviews: reviewsData,
+        totalRating: totalRating / reviewsData.length,
+      });
+    } else {
+      return res.json({
+        item: {},
+        reviews: reviewsData,
+        totalRating: 0,
+      });
+    }
   } catch (err) {
+    console.log(err);
     return res.status(500).json('Server error');
   }
 };
