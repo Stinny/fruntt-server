@@ -397,6 +397,7 @@ const getStoreStats = async (req, res) => {
 
   const dates = [];
   const totals = [];
+  const sales = [];
 
   try {
     switch (view) {
@@ -449,6 +450,7 @@ const getStoreStats = async (req, res) => {
           dataSet: {
             dates: dates,
             totals: totals,
+            sales: [todaysOrders.length],
           },
         });
 
@@ -469,14 +471,21 @@ const getStoreStats = async (req, res) => {
           placedOn: { $gte: sevenDaysAgo },
           paid: true,
         });
+
+        const salesByDate = {}; //obj to track sales for each date
+
         for (var x = 0; x < pastOrders.length; x++) {
           revenue += pastOrders[x].total;
           numOfOrders++;
+
+          const dateStr = pastOrders[x].placedOn.toDateString();
+          salesByDate[dateStr] = (salesByDate[dateStr] || 0) + 1;
         }
 
         // Get an array of dates for the past 7 days in reverse order
         const currentDate = new Date();
         const pastWeekDates = [];
+
         for (let i = 6; i >= 0; i--) {
           const pastDate = new Date();
           pastDate.setDate(currentDate.getDate() - i);
@@ -488,6 +497,10 @@ const getStoreStats = async (req, res) => {
           const dateString = date.toDateString();
           dates.push(dateString);
           totals.push(0);
+
+          // Add sales count for each date
+          const salesCount = salesByDate[dateString] || 0;
+          sales.push(salesCount);
         });
 
         const ordersForTotals = await Order.find({
@@ -497,9 +510,7 @@ const getStoreStats = async (req, res) => {
         });
 
         for (var z = 0; z < ordersForTotals.length; z++) {
-          const dateString = ordersForTotals[z].placedOn
-            .toISOString()
-            .split('T')[0];
+          const dateString = ordersForTotals[z].placedOn.toDateString();
           const index = dates.indexOf(dateString);
           if (index !== -1) {
             totals[index] += ordersForTotals[z].total;
@@ -515,6 +526,7 @@ const getStoreStats = async (req, res) => {
           dataSet: {
             dates: dates,
             totals: totals,
+            sales: sales,
           },
         });
       case 'thirty':
@@ -533,14 +545,21 @@ const getStoreStats = async (req, res) => {
           placedOn: { $gte: thirtyDaysAgo },
           storeId: req.params.storeId,
         });
+
+        const sales30 = {};
+
         for (var x = 0; x < past30Orders.length; x++) {
           revenue += past30Orders[x].total;
           numOfOrders++;
+
+          const dateStr30 = past30Orders[x].placedOn.toDateString();
+          sales30[dateStr30] = (sales30[dateStr30] || 0) + 1;
         }
 
         // Get an array of dates for the past 30 days in reverse order
         const dateNow = new Date();
         const past30Dates = [];
+
         for (let i = 29; i >= 0; i--) {
           const pastDate = new Date();
           pastDate.setDate(dateNow.getDate() - i);
@@ -552,6 +571,10 @@ const getStoreStats = async (req, res) => {
           const dateString = date.toDateString();
           dates.push(dateString);
           totals.push(0);
+
+          // Add sales count for each date
+          const salesCount30 = sales30[dateString] || 0;
+          sales.push(salesCount30);
         });
 
         const ordersFor30Totals = await Order.find({
@@ -561,9 +584,7 @@ const getStoreStats = async (req, res) => {
         });
 
         for (var z = 0; z < ordersFor30Totals.length; z++) {
-          const dateString = ordersFor30Totals[z].placedOn
-            .toISOString()
-            .split('T')[0];
+          const dateString = ordersFor30Totals[z].placedOn.toDateString();
           const index = dates.indexOf(dateString);
           if (index !== -1) {
             totals[index] += ordersFor30Totals[z].total;
@@ -579,6 +600,7 @@ const getStoreStats = async (req, res) => {
           dataSet: {
             dates: dates,
             totals: totals,
+            sales: sales,
           },
         });
       case 'all':
@@ -592,20 +614,29 @@ const getStoreStats = async (req, res) => {
           paid: true,
         });
 
+        var salesObj = {};
+
         for (var w = 0; w < allOrders.length; w++) {
           revenue += allOrders[w].total;
           numOfOrders++;
+
+          const dateStrAll = allOrders[w].placedOn.toDateString();
+          salesObj[dateStrAll] = (salesObj[dateStrAll] || 0) + 1;
         }
 
         // 6. Group the orders by the date they were placed.
         var ordersByDate = {};
+
         allOrders.forEach(function (order) {
-          console.log(order.total);
           var date = order.placedOn.toDateString();
           if (!ordersByDate[date]) {
             ordersByDate[date] = [];
           }
           ordersByDate[date].push(order);
+
+          // Add sales count for each date
+          const salesCountAll = salesObj[date] || 0;
+          sales.push(salesCountAll);
         });
 
         // 7. For each date group, calculate the total order amount.
@@ -626,6 +657,7 @@ const getStoreStats = async (req, res) => {
           dataSet: {
             dates: dates,
             totals: totals,
+            sales: sales,
           },
         });
       default:
