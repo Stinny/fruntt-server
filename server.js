@@ -30,7 +30,6 @@ const storefrontRoutes = require('./routes/storefront');
 const subscriptionRoutes = require('./routes/subscriptions');
 const feedbackRoutes = require('./routes/feedback');
 const stripeRoutes = require('./routes/stripeEvents');
-const aliRoutes = require('./routes/ali');
 
 server.use('/api/auth', authRoutes);
 server.use('/api/products', productsRoutes);
@@ -40,7 +39,6 @@ server.use('/api/storefront', storefrontRoutes);
 server.use('/api/subscriptions', subscriptionRoutes);
 server.use('/api/feedback', feedbackRoutes);
 server.use('/api/stripe/', stripeRoutes);
-server.use('/api/ali/', aliRoutes);
 
 server.get('/', (req, res) => {
   res.send('home');
