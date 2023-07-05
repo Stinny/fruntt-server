@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { sendReviewLinkEmail } = require('../email/transactional');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Review = require('../models/Review');
 
 //gets all customers from a storeId
 const getAll = async (req, res) => {
@@ -87,19 +88,13 @@ const getReviews = async (req, res) => {
 
     //if there is a product, then go ahead and get the customers/reviews
     if (product.length) {
-      const customers = await Customer.find({
+      const reviewsData = await Review.find({
         productId: product[0]._id,
-        reviewed: true,
       });
 
-      for (var i = 0; i < customers.length; i++) {
-        reviews.push({
-          review: customers[i].review,
-          rating: customers[i].rating,
-          customerName: `${customers[i].firstName} ${customers[i].lastName}`,
-          reviewedOn: customers[i].reviewedOn,
-        });
-        totalRating += customers[i].rating;
+      for (var r = 0; r < reviewsData.length; r++) {
+        reviews.push(reviewsData[r]);
+        totalRating += reviewsData[r]?.rating;
       }
     }
 

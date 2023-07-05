@@ -143,6 +143,7 @@ const editStyles = async (req, res) => {
   const {
     navbarBG,
     pageBG,
+    cardBG,
     pageText,
     buttonColor,
     buttonTextColor,
@@ -161,6 +162,7 @@ const editStyles = async (req, res) => {
     const storefrontToEdit = await Storefront.findById(storeId);
 
     storefrontToEdit.style.pageBackground = pageBG;
+    storefrontToEdit.style.cardBackground = cardBG;
     storefrontToEdit.style.navbarBackground = navbarBG;
     storefrontToEdit.style.footerBackground = footerBG;
     storefrontToEdit.style.pageText = pageText;
