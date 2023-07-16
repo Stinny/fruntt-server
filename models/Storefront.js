@@ -17,7 +17,7 @@ const StorefrontSchema = new mongoose.Schema(
     hideQuestions: { type: Boolean, default: false },
     hideReviews: { type: Boolean, default: false },
     style: {
-      pageBackground: { type: String, default: '#ffffff' },
+      pageBackground: { type: String, default: '#f2f2f2' },
       cardBackground: { type: String, default: '#ffffff' },
       navbarBackground: { type: String, default: '#ffffff' },
       footerBackground: { type: String, default: '#f3f3f3' },

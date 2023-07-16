@@ -57,7 +57,10 @@ const create = async (req, res) => {
     const storeFrontOwner = await User.findById(storeFront.userId);
     const itemWithContent = await Product.findById(item._id);
 
-    const amount = Number((total * 100).toFixed(2));
+    const amount = Math.round(total * 100);
+
+    const feePercentage = 0.01;
+    const feeAmount = Math.round(total * feePercentage * 100);
 
     const newOrder = new Order({
       storeId: storeId,
@@ -72,6 +75,7 @@ const create = async (req, res) => {
         amount: amount,
         currency: 'usd',
         automatic_payment_methods: { enabled: true },
+        application_fee_amount: feeAmount,
         on_behalf_of: storeFrontOwner.stripeId,
         transfer_data: {
           destination: storeFrontOwner.stripeId,
