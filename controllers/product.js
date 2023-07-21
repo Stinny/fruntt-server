@@ -346,6 +346,7 @@ const createDigitalProduct = async (req, res) => {
     digitalType,
     link,
     content,
+    info,
     callToAction,
     payChoice,
     suggestedPrice,
@@ -367,6 +368,7 @@ const createDigitalProduct = async (req, res) => {
       },
       link: link,
       content: content,
+      info: info,
       type: 'digital',
       callToAction: callToAction,
       payChoice: payChoice,
@@ -406,6 +408,7 @@ const editDigitalProduct = async (req, res) => {
     files,
     digitalType,
     content,
+    info,
     payChoice,
     suggestedPrice,
     callToAction,
@@ -424,6 +427,7 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.payChoice = payChoice;
     productToEdit.suggestedPrice = suggestedPrice;
     productToEdit.callToAction = callToAction;
+    productToEdit.info = info;
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;

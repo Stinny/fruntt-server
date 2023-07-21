@@ -138,10 +138,12 @@ const update = async (req, res) => {
     const orderToUpdate = await Order.findById(orderId);
     const storefront = await Storefront.findById(orderToUpdate?.storeId);
     const storefrontOwner = await User.findById(storefront?.userId);
+    const product = await Product.findById(orderToUpdate?.item?._id);
 
     orderToUpdate.email = email;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.fulfilled = true;
+    product.numberOfSales += 1;
 
     if (orderToUpdate.total == 0) orderToUpdate.paid = true;
 
@@ -165,6 +167,7 @@ const update = async (req, res) => {
     storefrontOwner.sellerProfile.numberOfSales += 1;
 
     await storefrontOwner.save();
+    await product.save();
 
     const savedOrder = await orderToUpdate.save();
     return res.json({ msg: 'Order updated', order: savedOrder });
