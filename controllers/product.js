@@ -350,6 +350,7 @@ const createDigitalProduct = async (req, res) => {
     callToAction,
     payChoice,
     suggestedPrice,
+    url,
   } = req.body;
 
   try {
@@ -373,6 +374,7 @@ const createDigitalProduct = async (req, res) => {
       callToAction: callToAction,
       payChoice: payChoice,
       suggestedPrice: suggestedPrice,
+      url: url,
     });
 
     if (files.length) {
@@ -412,6 +414,7 @@ const editDigitalProduct = async (req, res) => {
     payChoice,
     suggestedPrice,
     callToAction,
+    url,
   } = req.body;
   const productId = req.params.productId;
 
@@ -428,6 +431,7 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.suggestedPrice = suggestedPrice;
     productToEdit.callToAction = callToAction;
     productToEdit.info = info;
+    productToEdit.url = url;
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;
