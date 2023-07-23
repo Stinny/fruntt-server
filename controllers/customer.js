@@ -80,28 +80,36 @@ const sendReviewEmail = async (req, res) => {
 
 const getReviews = async (req, res) => {
   const storeId = req.params.storeId;
-  const reviews = [];
+  let reviews = [];
   let totalRating = 0;
+
+  const productData = [];
 
   try {
     const product = await Product.find({ storeId: storeId });
 
-    //if there is a product, then go ahead and get the customers/reviews
-    if (product.length) {
+    for (var x = 0; x < product.length; x++) {
       const reviewsData = await Review.find({
-        productId: product[0]._id,
+        productId: product[x]._id,
       });
 
       for (var r = 0; r < reviewsData.length; r++) {
         reviews.push(reviewsData[r]);
         totalRating += reviewsData[r]?.rating;
       }
+
+      productData.push({
+        item: product[x],
+        reviews: reviews,
+        totalRating: totalRating / reviews.length,
+      });
+
+      reviews = [];
+      totalRating = 0;
     }
 
     return res.json({
-      item: product.length ? product[0] : {},
-      reviews: reviews,
-      totalRating: totalRating / reviews.length,
+      products: productData,
     });
   } catch (err) {
     console.log(err);
