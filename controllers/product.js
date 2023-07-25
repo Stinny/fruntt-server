@@ -25,43 +25,69 @@ const getAll = async (req, res) => {
 const getStoreProducts = async (req, res) => {
   const storeId = req.params.storeId;
   let totalRating = 0;
+  let reviews = [];
+  let productData = [];
 
   try {
-    const reviewsData = [];
-
-    const product = await Product.findOne({
+    const product = await Product.find({
       storeId: storeId,
       published: true,
     }); //returns one
 
-    if (product) {
-      const reviews = await Review.find({
-        productId: product._id,
+    // if (product) {
+    //   const reviews = await Review.find({
+    //     productId: product._id,
+    //   });
+
+    //   for (var i = 0; i < reviews.length; i++) {
+    //     totalRating += reviews[i].rating;
+    //     reviewsData.push({
+    //       review: reviews[i].review,
+    //       rating: reviews[i].rating,
+    //       name: reviews[i]?.name,
+    //       reviewedOn: reviews[i].reviewedOn,
+    //     });
+    //   }
+    //   const { content, files, ...filteredProduct } = product._doc;
+
+    //   return res.json({
+    //     item: filteredProduct,
+    //     reviews: reviewsData,
+    //     totalRating: totalRating / reviewsData.length,
+    //   });
+    // } else {
+    //   return res.json({
+    //     item: {},
+    //     reviews: reviewsData,
+    //     totalRating: 0,
+    //   });
+    // }
+
+    for (var x = 0; x < product.length; x++) {
+      const reviewsData = await Review.find({
+        productId: product[x]._id,
       });
 
-      for (var i = 0; i < reviews.length; i++) {
-        totalRating += reviews[i].rating;
-        reviewsData.push({
-          review: reviews[i].review,
-          rating: reviews[i].rating,
-          name: reviews[i]?.name,
-          reviewedOn: reviews[i].reviewedOn,
-        });
+      for (var r = 0; r < reviewsData.length; r++) {
+        reviews.push(reviewsData[r]);
+        totalRating += reviewsData[r]?.rating;
       }
-      const { content, files, ...filteredProduct } = product._doc;
 
-      return res.json({
+      const { content, files, ...filteredProduct } = product[x]._doc;
+
+      productData.push({
         item: filteredProduct,
-        reviews: reviewsData,
-        totalRating: totalRating / reviewsData.length,
+        reviews: reviews,
+        totalRating: totalRating / reviews.length,
       });
-    } else {
-      return res.json({
-        item: {},
-        reviews: reviewsData,
-        totalRating: 0,
-      });
+
+      reviews = [];
+      totalRating = 0;
     }
+
+    return res.json({
+      products: productData,
+    });
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
