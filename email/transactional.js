@@ -127,12 +127,13 @@ const sendPasswordResetEmail = async (email, token) => {
 
 const sendOrderPlacedEmail = async ({ email, total, title }) => {
   await client.sendEmailWithTemplate({
-    From: `info@fruntt.com`,
+    From: `Fruntt info@fruntt.com`,
     To: email,
     TemplateAlias: 'orderPlaced',
     TemplateModel: {
       orderTotal: total,
       orderItemTitle: title,
+      product_name: 'Fruntt',
     },
   });
 };
