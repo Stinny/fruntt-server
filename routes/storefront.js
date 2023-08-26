@@ -14,6 +14,8 @@ router.get(
 
 router.get('/get/:storeId', storefront.getStorefrontById);
 
+router.get('/featured', storefront.getFeaturedStores);
+
 router.post('/edit/:storeId', isTokenValid, setUser, storefront.editStyles);
 
 router.post('/delete', isTokenValid, setUser, storefront.deleteStore);

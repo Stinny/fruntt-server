@@ -23,6 +23,34 @@ const getStorefront = async (req, res) => {
   }
 };
 
+const getFeaturedStores = async (req, res) => {
+  const storeData = [];
+  try {
+    const storefronts = await Storefront.find({ featured: true });
+
+    for (var x = 0; x < storefronts.length; x++) {
+      const products = await Product.find({ storeId: storefronts[x]._id });
+      const user = await User.findById(storefronts[x].userId);
+
+      storeData.push({
+        name: storefronts[x]?.name,
+        bio: user?.sellerProfile?.bio,
+        image: user?.sellerProfile?.picture?.url,
+        numOfSales: user?.sellerProfile?.numberOfSales,
+        numOfProducts: products.length,
+        url: storefronts[x]?.url,
+      });
+    }
+
+    console.log(storeData);
+
+    return res.json(storeData);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 const getStorefrontById = async (req, res) => {
   const storeId = req.params.storeId;
 
@@ -584,6 +612,7 @@ const getStoreStats = async (req, res) => {
 
 module.exports = {
   getStorefront,
+  getFeaturedStores,
   getStorefrontById,
   editStyles,
   changeName,
