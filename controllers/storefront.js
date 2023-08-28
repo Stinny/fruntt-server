@@ -42,8 +42,6 @@ const getFeaturedStores = async (req, res) => {
       });
     }
 
-    console.log(storeData);
-
     return res.json(storeData);
   } catch (err) {
     console.log(err);
