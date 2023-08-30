@@ -6,6 +6,8 @@ const isTokenValid = require('../middleware/verifyToken');
 //gets all orders related to a certain store
 router.get('/store/:storeId', isTokenValid, setUser, orders.getStoreOrders);
 
+router.get('/userorders', isTokenValid, setUser, orders.getUsersOrders);
+
 //creates an order
 router.post('/create', orders.create);
 

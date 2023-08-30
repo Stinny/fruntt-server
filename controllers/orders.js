@@ -388,6 +388,17 @@ const getDigitalOrder = async (req, res) => {
   }
 };
 
+//get users orders based on email
+const getUsersOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ email: req.user.email });
+
+    return res.json(orders);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 //creates a new review and marks order as reviewed
 const addReview = async (req, res) => {
   const { rating, review, orderId, name, customerEmail } = req.body;
@@ -458,4 +469,5 @@ module.exports = {
   addReview,
   getReviews,
   getReview,
+  getUsersOrders,
 };
