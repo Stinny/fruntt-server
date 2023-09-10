@@ -51,6 +51,8 @@ router.post('/add/review', orders.addReview);
 
 router.get('/rates/:orderId', orders.getRates);
 
+router.post('/view/:orderId', orders.markAsViewed);
+
 router.post('/shippinglabel', isTokenValid, setUser, orders.getShippingLabel);
 
 router.post('/updateorderamount', orders.updateOrderAmount);

@@ -418,6 +418,8 @@ const addReview = async (req, res) => {
 
     order.reviewed = true;
     order.reviewId = newReview._id;
+    order.review.content = review;
+    order.review.rating = rating;
 
     await newReview.save();
     await order.save();
@@ -436,6 +438,22 @@ const getReviews = async (req, res) => {
     const reviews = await Review.find({ storeId: storeId });
 
     return res.json(reviews);
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
+const markAsViewed = async (req, res) => {
+  const orderId = req.params.orderId;
+
+  try {
+    const order = await Order.findById(orderId);
+
+    order.viewed = true;
+
+    await order.save();
+
+    return res.json('Order viewed');
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -470,4 +488,5 @@ module.exports = {
   getReviews,
   getReview,
   getUsersOrders,
+  markAsViewed,
 };
