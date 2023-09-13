@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const OrderSchema = new mongoose.Schema(
   {
     email: { type: String },
-    firstName: { type: String },
-    lastName: { type: String },
+    name: { type: String },
+    country: {},
+    zipcode: { type: String },
     item: {},
     qty: { type: Number },
     options: {},

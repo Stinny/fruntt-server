@@ -132,7 +132,7 @@ const updateOrderAmount = async (req, res) => {
 //updates an order with final data
 const update = async (req, res) => {
   const orderId = req.params.orderId;
-  const { email } = req.body;
+  const { email, country, zipcode } = req.body;
 
   try {
     const orderToUpdate = await Order.findById(orderId);
@@ -141,6 +141,8 @@ const update = async (req, res) => {
     const product = await Product.findById(orderToUpdate?.item?._id);
 
     orderToUpdate.email = email;
+    orderToUpdate.country = country;
+    orderToUpdate.zipcode = zipcode;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.fulfilled = true;
     product.numberOfSales += 1;
