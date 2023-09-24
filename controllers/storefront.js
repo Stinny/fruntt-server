@@ -182,6 +182,7 @@ const editStyles = async (req, res) => {
     header,
     reviewBackground,
     faqBackground,
+    price,
   } = req.body;
 
   try {
@@ -202,6 +203,7 @@ const editStyles = async (req, res) => {
     storefrontToEdit.style.headerColor = header;
     storefrontToEdit.style.reviewBackground = reviewBackground;
     storefrontToEdit.style.faqBackground = faqBackground;
+    storefrontToEdit.style.price = price;
     storefrontToEdit.designAdded = true;
 
     storefrontToEdit.lastEdited = new Date();

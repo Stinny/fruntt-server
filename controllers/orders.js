@@ -132,22 +132,39 @@ const updateOrderAmount = async (req, res) => {
 //updates an order with final data
 const update = async (req, res) => {
   const orderId = req.params.orderId;
-  const { email, country, zipcode } = req.body;
+  const { email, country, zipcode, name } = req.body;
 
   try {
     const orderToUpdate = await Order.findById(orderId);
     const storefront = await Storefront.findById(orderToUpdate?.storeId);
     const storefrontOwner = await User.findById(storefront?.userId);
     const product = await Product.findById(orderToUpdate?.item?._id);
+    const customer = await Customer.findOne({ email: email });
 
     orderToUpdate.email = email;
     orderToUpdate.country = country;
     orderToUpdate.zipcode = zipcode;
+    orderToUpdate.name = name;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.fulfilled = true;
     product.numberOfSales += 1;
 
     if (orderToUpdate.total == 0) orderToUpdate.paid = true;
+
+    if (customer) {
+      customer.numberOfOrders += 1;
+      await customer.save();
+    } else {
+      const newCustomer = new Customer({
+        name: name,
+        country: country,
+        email: email,
+        zipcode: zipcode,
+        storeId: storefront?._id,
+      });
+      newCustomer.numberOfOrders += 1;
+      await newCustomer.save();
+    }
 
     await sendDigitalConfirmEmail({
       customerEmail: orderToUpdate.email,
