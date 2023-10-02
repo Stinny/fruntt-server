@@ -377,6 +377,7 @@ const createDigitalProduct = async (req, res) => {
     payChoice,
     suggestedPrice,
     url,
+    free,
   } = req.body;
 
   try {
@@ -385,10 +386,11 @@ const createDigitalProduct = async (req, res) => {
       storeId: storeId,
       userId: req.user.id,
       title: title,
-      price: price,
+      price: free ? 0 : price,
       description: description,
       published: published,
       digitalType: digitalType,
+      free: free,
       coverImage: {
         url: coverImage[0].url,
         key: coverImage[0].key,
@@ -441,8 +443,11 @@ const editDigitalProduct = async (req, res) => {
     suggestedPrice,
     callToAction,
     url,
+    free,
   } = req.body;
   const productId = req.params.productId;
+
+  console.log(req.body);
 
   try {
     const productToEdit = await Product.findById(productId);
@@ -458,6 +463,7 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.callToAction = callToAction;
     productToEdit.info = info;
     productToEdit.url = url;
+    productToEdit.free = free;
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;

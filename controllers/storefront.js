@@ -12,6 +12,7 @@ const {
   createEnv,
   updateEnv,
 } = require('../utils/netlifyApi');
+const Customer = require('../models/Customer');
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 const getStorefront = async (req, res) => {
@@ -363,6 +364,11 @@ const getStoreStats = async (req, res) => {
           visitedOn: { $gte: startOfDay, $lt: endOfDay },
         });
 
+        const todaysCustomers = await Customer.find({
+          storeId: req.params.storeId,
+          createdAt: { $gte: startOfDay, $lt: endOfDay },
+        });
+
         // Query orders for the current day
         const todaysOrders = await Order.find({
           placedOn: {
@@ -387,6 +393,7 @@ const getStoreStats = async (req, res) => {
 
           visits: todaysVisits.length,
           conversion: (numOfOrders / todaysVisits.length) * 100,
+          numberOfCustomers: todaysCustomers.length,
 
           dataSet: {
             dates: dates,
@@ -404,6 +411,11 @@ const getStoreStats = async (req, res) => {
         const visits = await Visit.find({
           storeId: req.params.storeId,
           visitedOn: { $gte: sevenDaysAgo },
+        });
+
+        const customers = await Customer.find({
+          storeId: req.params.storeId,
+          createdAt: { $gte: sevenDaysAgo },
         });
 
         //calculate revenue and num of orders
@@ -463,6 +475,7 @@ const getStoreStats = async (req, res) => {
 
           visits: visits.length,
           conversion: (numOfOrders / visits.length) * 100,
+          numberOfCustomers: customers.length,
 
           dataSet: {
             dates: dates,
@@ -479,6 +492,11 @@ const getStoreStats = async (req, res) => {
         const visitsPast30 = await Visit.find({
           storeId: req.params.storeId,
           visitedOn: { $gte: thirtyDaysAgo },
+        });
+
+        const customersPast30 = await Customer.find({
+          storeId: req.params.storeId,
+          createdAt: { $gte: thirtyDaysAgo },
         });
 
         //calculate revenue and num of orders
@@ -537,6 +555,7 @@ const getStoreStats = async (req, res) => {
 
           visits: visitsPast30.length,
           conversion: (numOfOrders / visitsPast30.length) * 100,
+          numberOfCustomers: customersPast30.length,
 
           dataSet: {
             dates: dates,
@@ -547,6 +566,10 @@ const getStoreStats = async (req, res) => {
       case 'all':
         //get visits for today
         const allVisits = await Visit.find({
+          storeId: req.params.storeId,
+        });
+
+        const allCustomers = await Customer.find({
           storeId: req.params.storeId,
         });
 
@@ -595,6 +618,7 @@ const getStoreStats = async (req, res) => {
           numOfOrders: numOfOrders,
           visits: allVisits.length,
           conversion: (numOfOrders / allVisits.length) * 100,
+          numberOfCustomers: allCustomers.length,
           dataSet: {
             dates: dates,
             totals: totals,

@@ -15,6 +15,7 @@ const ProductSchema = new mongoose.Schema(
     weight: { type: Number },
     shippingPrice: { type: Number },
     userId: { type: String },
+    free: { type: Boolean, default: false },
     storeId: { type: String },
     numberOfSales: { type: Number, default: 0 },
     info: {
