@@ -18,7 +18,7 @@ const StorefrontSchema = new mongoose.Schema(
     hideReviews: { type: Boolean, default: false },
     featured: { type: Boolean, default: false },
     style: {
-      pageBackground: { type: String, default: '#f2f2f2' },
+      pageBackground: { type: String, default: '#ebebeb' },
       cardBackground: { type: String, default: '#ffffff' },
       navbarBackground: { type: String, default: '#ffffff' },
       footerBackground: { type: String, default: '#f3f3f3' },
@@ -28,7 +28,7 @@ const StorefrontSchema = new mongoose.Schema(
       socialIcons: { type: String, default: '#ffffff' },
       buttonStyle: { type: String, default: 'outlined' },
       price: { type: String, default: '#ffffff' },
-      borderColor: { type: String, default: '#000000' },
+      borderColor: { type: String, default: '#ebebeb' },
       headerColor: { type: String, default: '#000000' },
       faqBackground: { type: String, default: '#f3f3f3' },
       reviewBackground: { type: String, default: '#f3f3f3' },

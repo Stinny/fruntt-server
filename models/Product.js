@@ -11,6 +11,8 @@ const ProductSchema = new mongoose.Schema(
     type: { type: String, default: 'physical' },
     digitalType: { type: String },
     published: { type: Boolean, required: true, default: true },
+    marketplace: { type: Boolean, default: false },
+    category: { type: String },
     weightUnit: { type: String },
     weight: { type: Number },
     shippingPrice: { type: Number },

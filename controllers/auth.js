@@ -229,11 +229,15 @@ const disconnectStripe = async (req, res) => {
 
 const updateAccountInfo = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, country, zipcode } = req.body;
+
+    console.log(req.body);
 
     const userToUpdate = await User.findById(req.user.id);
 
     userToUpdate.email = email;
+    userToUpdate.country = country;
+    userToUpdate.zipcode = zipcode;
 
     await userToUpdate.save();
     return res.json('User updated');

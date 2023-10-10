@@ -134,6 +134,8 @@ const update = async (req, res) => {
   const orderId = req.params.orderId;
   const { email, country, zipcode, name } = req.body;
 
+  console.log(req.body);
+
   try {
     const orderToUpdate = await Order.findById(orderId);
     const storefront = await Storefront.findById(orderToUpdate?.storeId);
@@ -456,7 +458,9 @@ const getReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ storeId: storeId });
 
-    return res.json(reviews);
+    const orderedReviews = reviews.reverse();
+
+    return res.json(orderedReviews);
   } catch (err) {
     return res.status(500).json('Server error');
   }

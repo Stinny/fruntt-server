@@ -378,6 +378,8 @@ const createDigitalProduct = async (req, res) => {
     suggestedPrice,
     url,
     free,
+    marketplace,
+    category,
   } = req.body;
 
   try {
@@ -403,6 +405,8 @@ const createDigitalProduct = async (req, res) => {
       payChoice: payChoice,
       suggestedPrice: suggestedPrice,
       url: url,
+      marketplace: marketplace,
+      category: category,
     });
 
     if (files.length) {
@@ -444,6 +448,8 @@ const editDigitalProduct = async (req, res) => {
     callToAction,
     url,
     free,
+    category,
+    marketplace,
   } = req.body;
   const productId = req.params.productId;
 
@@ -464,6 +470,8 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.info = info;
     productToEdit.url = url;
     productToEdit.free = free;
+    productToEdit.category = category;
+    productToEdit.marketplace = marketplace;
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;
