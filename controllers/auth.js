@@ -461,6 +461,32 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  const { newPassword, oldPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+
+    //check if oldPassword matches the password on server
+    const validPassword = await bcrypt.compare(oldPassword, user.password);
+    if (!validPassword) return res.status(400).json('Invalid password');
+
+    //creates salt
+    //then creates the hash from salt and password
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(newPassword, salt);
+
+    user.password = hash;
+
+    await user.save();
+
+    return res.json('Password changed');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 const twitterAuth = (req, res) => {
   const type = req.params.type;
 
@@ -703,4 +729,5 @@ module.exports = {
   twitterAuth,
   twitterLogin,
   twitterRegister,
+  changePassword,
 };
