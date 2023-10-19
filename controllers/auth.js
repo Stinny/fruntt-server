@@ -469,7 +469,7 @@ const changePassword = async (req, res) => {
 
     //check if oldPassword matches the password on server
     const validPassword = await bcrypt.compare(oldPassword, user.password);
-    if (!validPassword) return res.status(400).json('Invalid password');
+    if (!validPassword) return res.json('Invalid password');
 
     //creates salt
     //then creates the hash from salt and password

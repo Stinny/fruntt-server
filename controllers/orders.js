@@ -141,7 +141,10 @@ const update = async (req, res) => {
     const storefront = await Storefront.findById(orderToUpdate?.storeId);
     const storefrontOwner = await User.findById(storefront?.userId);
     const product = await Product.findById(orderToUpdate?.item?._id);
-    const customer = await Customer.findOne({ email: email });
+    const customer = await Customer.findOne({
+      email: email,
+      storeId: storefront._id,
+    });
 
     orderToUpdate.email = email;
     orderToUpdate.country = country;
