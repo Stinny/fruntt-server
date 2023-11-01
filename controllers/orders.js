@@ -134,8 +134,6 @@ const update = async (req, res) => {
   const orderId = req.params.orderId;
   const { email, country, zipcode, name } = req.body;
 
-  console.log(req.body);
-
   try {
     const orderToUpdate = await Order.findById(orderId);
     const storefront = await Storefront.findById(orderToUpdate?.storeId);
@@ -178,7 +176,7 @@ const update = async (req, res) => {
       orderItem: orderToUpdate?.item.title,
       orderItemPrice: orderToUpdate?.item.price,
       orderTotal: orderToUpdate?.total,
-      storeEmail: storefront?.email,
+      storeEmail: storefrontOwner?.email,
       storeName: storefront?.name,
     });
 

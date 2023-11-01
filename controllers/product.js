@@ -386,6 +386,7 @@ const createDigitalProduct = async (req, res) => {
     const storefront = await Storefront.findById(storeId);
     const newDigitalProduct = new Product({
       storeId: storeId,
+      storeUrl: storefront.url,
       userId: req.user.id,
       title: title,
       price: free ? 0 : price,
@@ -581,9 +582,28 @@ const deleteFAQ = async (req, res) => {
   }
 };
 
+const getMarketProducts = async (req, res) => {
+  const filter = req.params.filter;
+  let products;
+  console.log(filter);
+
+  try {
+    if (filter === 'all') {
+      products = await Product.find({ marketplace: true });
+    } else {
+      products = await Product.find({ marketplace: true, digitalType: filter });
+    }
+
+    return res.json(products.reverse());
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getAll,
   getStoreProducts,
+  getMarketProducts,
   getProduct,
   create,
   update,

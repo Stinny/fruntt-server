@@ -101,7 +101,7 @@ const sendOrderFulfilledEmail = async ({
   trackingUrl,
 }) => {
   await client.sendEmailWithTemplate({
-    From: `${storeName}@fruntt.com`,
+    From: storeEmail,
     To: customerEmail,
     ReplyTo: storeEmail,
     TemplateAlias: 'orderFulfilled',

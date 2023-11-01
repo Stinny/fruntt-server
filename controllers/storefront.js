@@ -110,6 +110,11 @@ const changeName = async (req, res) => {
     storefrontToEdit.name = req.body.name;
     storefrontToEdit.url = `https://${req.body.name}.fruntt.com`;
 
+    await Product.updateMany(
+      { storeId: storefrontToEdit._id },
+      { storeUrl: `https://${req.body.name}.fruntt.com` }
+    );
+
     await updateSiteName({
       siteId: storefrontToEdit?.siteId,
       storeName: req.body.name,

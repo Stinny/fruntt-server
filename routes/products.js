@@ -17,6 +17,9 @@ router.get('/store/:storeId', product.getStoreProducts);
 //gets single product
 router.get('/:productId', product.getProduct);
 
+//gets marketplace products
+router.get('/market/:filter', product.getMarketProducts);
+
 //creates product
 router.post('/create', isTokenValid, setUser, product.create);
 

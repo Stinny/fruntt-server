@@ -19,6 +19,7 @@ const ProductSchema = new mongoose.Schema(
     userId: { type: String },
     free: { type: Boolean, default: false },
     storeId: { type: String },
+    storeUrl: { type: String },
     numberOfSales: { type: Number, default: 0 },
     info: {
       type: String,
