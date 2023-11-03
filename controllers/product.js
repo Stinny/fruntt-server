@@ -585,7 +585,6 @@ const deleteFAQ = async (req, res) => {
 const getMarketProducts = async (req, res) => {
   const filter = req.params.filter;
   let products;
-  console.log(filter);
 
   try {
     if (filter === 'all') {
