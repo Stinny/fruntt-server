@@ -9,6 +9,7 @@ const {
 const Storefront = require('../models/Storefront');
 const { validateBusAddress } = require('../utils/genShippingLabel');
 const Review = require('../models/Review');
+const User = require('../models/User');
 
 //gets all storefront products(for client/strorefront owners)
 const getAll = async (req, res) => {
@@ -384,6 +385,8 @@ const createDigitalProduct = async (req, res) => {
 
   try {
     const storefront = await Storefront.findById(storeId);
+    const user = await User.findById(req.user.id);
+
     const newDigitalProduct = new Product({
       storeId: storeId,
       storeUrl: storefront.url,
@@ -408,6 +411,8 @@ const createDigitalProduct = async (req, res) => {
       url: url,
       marketplace: marketplace,
       category: category,
+      userName: user.name,
+      userPicture: user.sellerProfile.picture.url,
     });
 
     if (files.length) {

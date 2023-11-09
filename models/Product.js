@@ -34,6 +34,8 @@ const ProductSchema = new mongoose.Schema(
     payChoice: { type: Boolean, default: false },
     suggestedPrice: { type: String },
     link: { type: String },
+    userName: { type: String },
+    userPicture: { type: String },
     faqs: [
       {
         question: { type: String },
