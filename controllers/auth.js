@@ -276,6 +276,11 @@ const updateSellerProfile = async (req, res) => {
     user.sellerProfile.picture.key = profilePicKey;
     user.name = name;
 
+    await Product.updateMany(
+      { userId: user._id },
+      { userPicture: profilePicUrl, userName: name }
+    );
+
     await user.save();
 
     return res.json('Profile updated');
