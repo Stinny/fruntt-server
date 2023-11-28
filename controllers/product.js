@@ -604,10 +604,24 @@ const getMarketProducts = async (req, res) => {
   }
 };
 
+const getFeaturedProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ marketplace: true, featured: true });
+
+    console.log(products);
+
+    return res.json(products);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   getAll,
   getStoreProducts,
   getMarketProducts,
+  getFeaturedProducts,
   getProduct,
   create,
   update,

@@ -20,6 +20,9 @@ router.get('/:productId', product.getProduct);
 //gets marketplace products
 router.get('/market/:filter', product.getMarketProducts);
 
+//gets featured products
+router.get('/featured/c', product.getFeaturedProducts);
+
 //creates product
 router.post('/create', isTokenValid, setUser, product.create);
 
