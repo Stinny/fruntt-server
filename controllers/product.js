@@ -459,8 +459,6 @@ const editDigitalProduct = async (req, res) => {
   } = req.body;
   const productId = req.params.productId;
 
-  console.log(req.body);
-
   try {
     const productToEdit = await Product.findById(productId);
 
@@ -607,8 +605,6 @@ const getMarketProducts = async (req, res) => {
 const getFeaturedProducts = async (req, res) => {
   try {
     const products = await Product.find({ marketplace: true, featured: true });
-
-    console.log(products);
 
     return res.json(products);
   } catch (err) {
