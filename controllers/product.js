@@ -596,7 +596,7 @@ const getMarketProducts = async (req, res) => {
       products = await Product.find({ marketplace: true, digitalType: filter });
     }
 
-    return res.json(products.reverse());
+    return res.json(products.sort(() => Math.random() - 0.5));
   } catch (err) {
     return res.status(500).json('Server error');
   }

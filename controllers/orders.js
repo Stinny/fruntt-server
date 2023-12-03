@@ -75,7 +75,7 @@ const create = async (req, res) => {
         amount: amount,
         currency: 'usd',
         automatic_payment_methods: { enabled: true },
-        application_fee_amount: feeAmount,
+        application_fee_amount: total < 10 ? 50 : 100,
         on_behalf_of: storeFrontOwner.stripeId,
         transfer_data: {
           destination: storeFrontOwner.stripeId,
@@ -104,8 +104,7 @@ const updateOrderAmount = async (req, res) => {
     const order = await Order.findById(orderId);
 
     //initial amount calculated
-    const amount =
-      order.item.type === 'physical' ? total + order.item.shippingPrice : total;
+    const amount = total;
     //final amount converted to cents
     const finalAmount = amount.toFixed(2) * 100;
 
@@ -119,7 +118,7 @@ const updateOrderAmount = async (req, res) => {
     //update paymentIntent attached to order
     const paymentIntent = await stripe.paymentIntents.update(order.paymentId, {
       amount: formattedAmount,
-      application_fee_amount: formattedFee,
+      application_fee_amount: amount < 10 ? 50 : 100,
     });
 
     return res.json('Amount updated');
