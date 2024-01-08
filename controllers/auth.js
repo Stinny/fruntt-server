@@ -621,11 +621,6 @@ const twitterRegister = async (req, res) => {
                 console.error('Error fetching user profile data:', error);
                 res.status(500).send('Error fetching user profile data');
               } else {
-                // Now you have the user's profile data
-                // You can store it in your database or use it as needed
-
-                // Send a JSON response with the profile data
-
                 //checks if email is already in use
                 const emailInUse = await User.find({
                   email: profileData?.email,
@@ -656,28 +651,7 @@ const twitterRegister = async (req, res) => {
                 newUser.sellerProfile.picture.url =
                   profileData?.profile_image_url_https;
 
-                // //create the new storefront mongo doc
-                // const storeFront = new Storefront({
-                //   userId: newUser._id,
-                //   name: req.body.storeName,
-                // });
-
-                // newUser.storeId = storeFront._id;
                 newUser.sellerProfile.twitter = `https://twitter.com/${profileData?.screen_name}`;
-
-                // const deployStore = await createSite(
-                //   req.body.storeName,
-                //   storeFront._id
-                // );
-
-                // const createEnvs = await createEnv({
-                //   storeName: req.body.storeName,
-                //   storeId: storeFront._id,
-                //   siteId: deployStore.id,
-                // });
-
-                // storeFront.url = deployStore.url;
-                // storeFront.siteId = deployStore.id;
 
                 const accessToken = newUser.genAccessToken();
                 const refreshToken = newUser.genRefreshToken();

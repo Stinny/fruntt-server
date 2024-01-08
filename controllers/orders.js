@@ -168,6 +168,18 @@ const update = async (req, res) => {
       await newCustomer.save();
     }
 
+    const stripeCustomer = await stripe.customers.create({
+      name: name,
+      email: email,
+    });
+
+    const paymentIntent = await stripe.paymentIntents.update(
+      orderToUpdate.paymentId,
+      {
+        customer: stripeCustomer.id,
+      }
+    );
+
     await sendDigitalConfirmEmail({
       customerEmail: orderToUpdate.email,
 
@@ -192,200 +204,6 @@ const update = async (req, res) => {
 
     const savedOrder = await orderToUpdate.save();
     return res.json({ msg: 'Order updated', order: savedOrder });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json('Server error');
-  }
-};
-
-const markOrderAsFulfilled = async (req, res) => {
-  const orderId = req.params.orderId;
-  const { trackingNum, fulfillType, carrierCode } = req.body;
-
-  console.log(req.body);
-
-  let trackingUrl;
-
-  try {
-    const order = await Order.findById(orderId);
-    const storefront = await Storefront.findById(order.storeId);
-
-    order.fulfilled = true;
-    order.fulfiledOn = new Date();
-
-    if (fulfillType === 'manu') {
-      order.trackingNumber = trackingNum;
-      order.manualTrackingNumber = true;
-      trackingUrl = await trackOrderUsingNumber({
-        carrierCode: carrierCode,
-        trackingNumer: trackingNum,
-      });
-    } else if (fulfillType === 'auto') {
-      trackingUrl = await trackOrderUsingNumber({
-        carrierCode: 'ups',
-        trackingNumer: order.trackingNumber,
-      });
-    }
-
-    await sendOrderFulfilledEmail({
-      customerEmail: order?.email,
-      customerName: order?.firstName,
-      storeName: storefront?.name,
-      storeUrl: storefront?.url,
-      orderId: order._id,
-      trackingUrl: trackingUrl,
-    });
-
-    await order.save();
-
-    return res.json('Order fulfilled');
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json('Server error');
-  }
-};
-
-const getShippingLabel = async (req, res) => {
-  const { orderId, rateId, amount } = req.body;
-
-  try {
-    const order = await Order.findById(orderId);
-    const user = await User.findById(req.user.id);
-
-    const finalAmount = Number((amount * 100).toFixed(2));
-
-    if (user?.paymentMethod?.id) {
-      const labelPaymentIntent = await stripe.paymentIntents.create({
-        amount: finalAmount,
-        currency: 'usd',
-        customer: user.customerId,
-        payment_method: user.paymentMethod.id,
-        confirm: true,
-        description: 'Shipping label purschase',
-      });
-
-      if (labelPaymentIntent.status === 'succeeded') {
-        const labelAndTracking = await genShippingLabel({ rateId: rateId });
-
-        order.labelId = labelAndTracking.labelId;
-        order.trackingNumber = labelAndTracking.trackingNumber;
-        order.labelUrl = labelAndTracking.url;
-
-        await order.save();
-
-        return res.json({ error: false, msg: 'Label created' });
-      } else {
-        return res.json({
-          error: true,
-          msg: 'There was an error with the payment on this account',
-        });
-      }
-    } else {
-      return res.json({
-        error: true,
-        msg: 'You have no payment method added, add one in settings',
-      });
-    }
-  } catch (err) {
-    return res.status(500).json('Server error');
-  }
-};
-
-const editShippingAddress = async (req, res) => {
-  const { orderId, address, country, city, state, zipcode } = req.body;
-
-  try {
-    const order = await Order.findById(orderId);
-
-    order.shippingAddress.address = address;
-    order.shippingAddress.country = country;
-    order.shippingAddress.city = city;
-    order.shippingAddress.state = state;
-    order.shippingAddress.zipcode = zipcode;
-
-    await order.save();
-
-    return res.json('Shipping address updated');
-  } catch (err) {
-    return res.status(500).json('Server error');
-  }
-};
-
-const editShipsFromAddress = async (req, res) => {
-  const { orderId, address, country, city, state, zipcode } = req.body;
-
-  try {
-    const order = await Order.findById(orderId);
-
-    order.shipsFrom.address = address;
-    order.shipsFrom.country = country;
-    order.shipsFrom.state = state;
-    order.shipsFrom.city = city;
-    order.shipsFrom.zipcode = zipcode;
-
-    await order.save();
-
-    return res.json('Address updated');
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json('Server error');
-  }
-};
-
-const getOrderStatus = async (req, res) => {
-  const orderId = req.params.orderId;
-  let trackOrderReq;
-
-  try {
-    const order = await Order.findById(orderId);
-
-    if (order.labelId) {
-      trackOrderReq = await trackOrderUsingLabelId(order.labelId);
-    }
-
-    return res.json(trackOrderReq);
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json('Server error');
-  }
-};
-
-const getRates = async (req, res) => {
-  const orderId = req.params.orderId;
-  const rates = [];
-
-  try {
-    const order = await Order.findById(orderId);
-
-    if (order.fulfilled || order.labelUrl || order.item.type === 'digital')
-      return res.json(rates);
-
-    const rateResponse = await getShippingRates({
-      address: order.shippingAddress.address,
-      country: order.shippingAddress.country,
-      city: order.shippingAddress.city,
-      state: order.shippingAddress.state,
-      zip: order.shippingAddress.zipcode,
-      weight: order.item.weight,
-      unit: order.item.weightUnit,
-      fromAddress: order.shipsFrom.address,
-      fromCity: order.shipsFrom.city,
-      fromState: order.shipsFrom.state,
-      fromZip: order.shipsFrom.zipcode,
-    });
-
-    const ratesArr = rateResponse.rates;
-
-    for (var i = 0; i < ratesArr.length; i++) {
-      rates.push({
-        rateId: ratesArr[i].rateId,
-        amount: ratesArr[i].shippingAmount.amount,
-        date: ratesArr[i].estimatedDeliveryDate,
-        service: ratesArr[i].serviceType,
-      });
-    }
-
-    return res.json(rates);
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
@@ -499,12 +317,6 @@ module.exports = {
   getStoreOrders,
   create,
   update,
-  markOrderAsFulfilled,
-  editShippingAddress,
-  editShipsFromAddress,
-  getOrderStatus,
-  getRates,
-  getShippingLabel,
   updateOrderAmount,
   getDigitalOrder,
   addReview,

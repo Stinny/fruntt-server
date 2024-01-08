@@ -20,40 +20,13 @@ router.get('/:orderId', orders.getOrder);
 //gets single digital order
 router.get('/digital/:orderId', orders.getDigitalOrder);
 
-router.post(
-  '/fulfill/:orderId',
-  isTokenValid,
-  setUser,
-  orders.markOrderAsFulfilled
-);
-
-router.post(
-  '/shippingaddress',
-  isTokenValid,
-  setUser,
-  orders.editShippingAddress
-);
-
-router.post(
-  '/update/shipsfrom/',
-  isTokenValid,
-  setUser,
-  orders.editShipsFromAddress
-);
-
-router.get('/status/:orderId', orders.getOrderStatus);
-
 router.get('/reviews/:storeId', orders.getReviews);
 
 router.get('/reviews/r/:reviewId', orders.getReview);
 
 router.post('/add/review', orders.addReview);
 
-router.get('/rates/:orderId', orders.getRates);
-
 router.post('/view/:orderId', orders.markAsViewed);
-
-router.post('/shippinglabel', isTokenValid, setUser, orders.getShippingLabel);
 
 router.post('/updateorderamount', orders.updateOrderAmount);
 

@@ -35,35 +35,6 @@ const getStoreProducts = async (req, res) => {
       published: true,
     }); //returns one
 
-    // if (product) {
-    //   const reviews = await Review.find({
-    //     productId: product._id,
-    //   });
-
-    //   for (var i = 0; i < reviews.length; i++) {
-    //     totalRating += reviews[i].rating;
-    //     reviewsData.push({
-    //       review: reviews[i].review,
-    //       rating: reviews[i].rating,
-    //       name: reviews[i]?.name,
-    //       reviewedOn: reviews[i].reviewedOn,
-    //     });
-    //   }
-    //   const { content, files, ...filteredProduct } = product._doc;
-
-    //   return res.json({
-    //     item: filteredProduct,
-    //     reviews: reviewsData,
-    //     totalRating: totalRating / reviewsData.length,
-    //   });
-    // } else {
-    //   return res.json({
-    //     item: {},
-    //     reviews: reviewsData,
-    //     totalRating: 0,
-    //   });
-    // }
-
     for (var x = 0; x < product.length; x++) {
       const reviewsData = await Review.find({
         productId: product[x]._id,
@@ -188,80 +159,6 @@ const create = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json('Server Error');
-  }
-};
-
-//updates single product
-const update = async (req, res) => {
-  const productId = req.params.productId;
-  const {
-    title,
-    description,
-    price,
-    stock,
-    published,
-    weightUnit,
-    weight,
-    address,
-    country,
-    state,
-    city,
-    zipcode,
-    options,
-    shippingPrice,
-    imageData,
-  } = req.body;
-
-  try {
-    const productToUpdate = await Product.findById(productId);
-
-    //try to validate address
-    const validAddress = await validateBusAddress({
-      address,
-      city,
-      state,
-      zip: zipcode,
-    });
-
-    if (validAddress === 'Valid address') {
-      //make updates
-      productToUpdate.title = title;
-      productToUpdate.description = description;
-      productToUpdate.price = price;
-      productToUpdate.stock = stock;
-      productToUpdate.published = published;
-      productToUpdate.weightUnit = weightUnit;
-      productToUpdate.weight = weight;
-      productToUpdate.shipsFrom.address = address;
-      productToUpdate.shipsFrom.country = country;
-      productToUpdate.shipsFrom.state = state;
-      productToUpdate.shipsFrom.city = city;
-      productToUpdate.shipsFrom.zipcode = zipcode;
-      productToUpdate.shippingPrice = shippingPrice;
-
-      //push image data to doc
-      if (imageData.length) {
-        for (var i = 0; i < imageData.length; i++) {
-          productToUpdate.images.push({
-            url: imageData[i].url,
-            key: imageData[i].key,
-          });
-        }
-      }
-
-      //push options data to doc
-      productToUpdate.options = options;
-
-      //save the updates to the product doc
-      await productToUpdate.save();
-
-      res.status(200).json('Item updated');
-    } else {
-      res.json('Invalid address');
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).json('Server Error');
   }
 };
 
@@ -540,51 +437,6 @@ const deleteFile = async (req, res) => {
   }
 };
 
-const addDescription = async (req, res) => {
-  const { description, productId } = req.body;
-
-  try {
-    const product = await Product.findById(productId);
-
-    product.info = description;
-
-    await product.save();
-
-    return res.json('Description added');
-  } catch (err) {
-    return res.status(500).json('Server error');
-  }
-};
-
-const addFAQ = async (req, res) => {
-  const { productId, question, answer } = req.body;
-
-  try {
-    const product = await Product.findById(productId);
-
-    product.faqs.push({ question: question, answer: answer });
-    await product.save();
-    return res.json('FAQ added');
-  } catch (err) {
-    return res.status(500).json('Server error');
-  }
-};
-
-const deleteFAQ = async (req, res) => {
-  const { productId, faqId } = req.body;
-
-  try {
-    const product = await Product.findById(productId);
-
-    await product.faqs.pull({ _id: faqId });
-    await product.save();
-
-    return res.json('FAQ deleted');
-  } catch (err) {
-    return res.status(500).json('Server error');
-  }
-};
-
 const getMarketProducts = async (req, res) => {
   const filter = req.params.filter;
   let products;
@@ -620,18 +472,14 @@ module.exports = {
   getFeaturedProducts,
   getProduct,
   create,
-  update,
   remove,
   imageUpload,
   imageDelete,
   getItemImages,
   getCoverImage,
-  addFAQ,
-  deleteFAQ,
   digitalFilesUpload,
   createDigitalProduct,
   editDigitalProduct,
   deleteFile,
   getAllFiles,
-  addDescription,
 };

@@ -34,19 +34,6 @@ router.post(
   product.createDigitalProduct
 );
 
-router.post('/addfaq', isTokenValid, setUser, product.addFAQ);
-
-router.post('/deletefaq', isTokenValid, setUser, product.deleteFAQ);
-
-//updates product
-router.post(
-  '/edit/:productId',
-  isTokenValid,
-  setUser,
-  isProductOwner,
-  product.update
-);
-
 //updates digital product
 router.post(
   '/editdigital/:productId',
@@ -66,8 +53,6 @@ router.post('/filesupload', multipleUpload, product.digitalFilesUpload);
 router.post('/image/delete/', product.imageDelete);
 
 router.post('/file/delete/', product.deleteFile);
-
-router.post('/description/add', product.addDescription);
 
 router.get('/images/:productId', product.getItemImages);
 
