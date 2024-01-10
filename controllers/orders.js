@@ -173,12 +173,14 @@ const update = async (req, res) => {
       email: email,
     });
 
-    const paymentIntent = await stripe.paymentIntents.update(
-      orderToUpdate.paymentId,
-      {
-        customer: stripeCustomer.id,
-      }
-    );
+    if (orderToUpdate.total > 0) {
+      const paymentIntent = await stripe.paymentIntents.update(
+        orderToUpdate.paymentId,
+        {
+          customer: stripeCustomer.id,
+        }
+      );
+    }
 
     await sendDigitalConfirmEmail({
       customerEmail: orderToUpdate.email,
