@@ -222,6 +222,42 @@ const addVisit = async (req, res) => {
   }
 };
 
+const addStorefront = async (req, res) => {
+  const { pageName } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    const storeExists = await Storefront.find({ name: pageName });
+    if (storeExists.length) return res.json({ msg: 'Already exists' });
+    const storefront = new Storefront({
+      userId: req.user.id,
+      name: pageName,
+    });
+    const deployStore = await createSite(pageName, storefront._id);
+
+    const createEnvs = await createEnv({
+      storeName: pageName,
+      storeId: storefront._id,
+      siteId: deployStore.id,
+    });
+    storefront.url = deployStore.url;
+    storefront.siteId = deployStore.id;
+    await storefront.save();
+    const stores = await Storefront.find({ userId: req.user.id });
+    let storeIds = [];
+    for (var i = 0; i < stores.length; i++) {
+      storeIds.push({ id: stores[i]._id, url: stores[i].url });
+    }
+    return res.json({
+      msg: 'Page added',
+      storefront: storefront,
+      storeIds: storeIds,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 //deletes storefront doc and product docs and returns updated array of stores
 const deleteStore = async (req, res) => {
   const { storeId } = req.body;
@@ -569,4 +605,5 @@ module.exports = {
   getStoreStats,
   deleteStore,
   deleteLogo,
+  addStorefront,
 };

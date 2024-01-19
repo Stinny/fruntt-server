@@ -298,6 +298,7 @@ const createDigitalProduct = async (req, res) => {
         url: coverImage[0].url,
         key: coverImage[0].key,
       },
+      coverImages: coverImage,
       link: link,
       content: content,
       info: info,

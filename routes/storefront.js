@@ -26,4 +26,6 @@ router.post('/deletelogo', isTokenValid, setUser, storefront.deleteLogo);
 
 router.post('/addvisit', storefront.addVisit);
 
+router.post('/addpage', isTokenValid, setUser, storefront.addStorefront);
+
 module.exports = router;
