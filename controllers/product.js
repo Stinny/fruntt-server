@@ -196,7 +196,7 @@ const getItemImages = async (req, res) => {
 const getCoverImage = async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId);
-    const coverImage = product.coverImage;
+    const coverImage = product.coverImages;
 
     return res.json(coverImage);
   } catch (err) {
@@ -354,6 +354,7 @@ const editDigitalProduct = async (req, res) => {
     free,
     category,
     marketplace,
+    coverImage,
   } = req.body;
   const productId = req.params.productId;
 
@@ -374,6 +375,12 @@ const editDigitalProduct = async (req, res) => {
     productToEdit.free = free;
     productToEdit.category = category;
     productToEdit.marketplace = marketplace;
+
+    if (coverImage.length) {
+      for (var z = 0; z < coverImage.length; z++) {
+        productToEdit.coverImages.push(coverImage[z]);
+      }
+    }
 
     if (coverImageUrl && coverImageKey) {
       productToEdit.coverImage.url = coverImageUrl;
@@ -402,12 +409,15 @@ const imageDelete = async (req, res) => {
   try {
     const product = await Product.findById(productId); //get product to access images
 
-    if (product?.type === 'digital') {
-      product.coverImage.url = '';
-      product.coverImage.key = '';
-    } else {
-      await product.images.pull({ _id: imgId }); //delete the image by the id
-    }
+    // if (product?.type === 'digital') {
+    //   product.coverImage.url = '';
+    //   product.coverImage.key = '';
+    // } else {
+    //   await product.coverImages.pull({ key: key }); //delete the image by the id
+    // }
+
+    // await product.coverImages.pull({ key: key }); //delete the image by the id
+    product.coverImages = product.coverImages.filter((img) => img.key !== key);
     await product.save();
 
     return res.json('Image deleted');
