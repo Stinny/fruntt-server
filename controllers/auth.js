@@ -115,6 +115,7 @@ const register = async (req, res) => {
 
     const stripeCustomer = await stripe.customers.create({
       email: req.body.email,
+      description: 'Fruntt - seller',
     });
 
     newUser.customerId = stripeCustomer.id;

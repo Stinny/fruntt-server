@@ -171,6 +171,7 @@ const update = async (req, res) => {
     const stripeCustomer = await stripe.customers.create({
       name: name,
       email: email,
+      description: `Fruntt - customer of ${storefront?.url}`,
     });
 
     if (orderToUpdate.total > 0) {

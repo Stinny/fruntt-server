@@ -45,7 +45,7 @@ const createReferal = async () => {
     .post(paypalApiUrl, requestBody, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer A21AAI8ZNEum49ss_NuhHOyf1w13whqJdWPKVzjPo_r8jItfG_P05FHRsEEusqpxNuGhSDG61BjFAjcgbdSVA-lI5QsR4ObTg`,
+        Authorization: `Bearer {VALID TOKEN GOES HERE}`,
       },
     })
     .then((response) => {
