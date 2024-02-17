@@ -11,6 +11,7 @@ const {
 const Product = require('../models/Product');
 const Oauth = require('oauth');
 const Twitter = require('twitter');
+const countryToCurrency = require('country-to-currency');
 
 //for twitter oauth
 const oauth = new Oauth.OAuth(
@@ -688,6 +689,176 @@ const twitterRegister = async (req, res) => {
   }
 };
 
+const addBankAccount = async (req, res) => {
+  let type = req.body.type;
+  let ip = req.ip || req.ips;
+  let date = new Date();
+  let timestamp = Math.floor(date.getTime() / 1000);
+
+  let currency =
+    type === 'individual'
+      ? countryToCurrency[req.body.country.value]
+      : countryToCurrency[req.body.busCountry.value];
+
+  switch (req.body.busType) {
+    case 'non_profit':
+      busType = 'non_profit';
+      break;
+    case 'company':
+      busType = 'company';
+      break;
+    default:
+      busType = '';
+  }
+
+  try {
+    //   //get bank account details
+    //   //create custom account
+    //   //create bank token
+    //   //create bank account(external account) with account id and token id
+    //   //add account ID and bank ID to user doc
+    const user = await User.findById(req.user.id);
+
+    //create initial stripe account
+    const account = await stripe.accounts.create({
+      type: 'custom',
+      country:
+        type === 'individual'
+          ? req.body.country.value
+          : req.body.busCountry.value,
+      email: user.email,
+      capabilities: {
+        card_payments: {
+          requested: true,
+        },
+        transfers: {
+          requested: true,
+        },
+      },
+    });
+
+    const accountParams = {
+      business_type: type === 'individual' ? 'individual' : busType,
+      settings: {
+        payouts: {
+          schedule: { interval: 'weekly', weekly_anchor: 'friday' },
+        },
+      },
+      business_profile: {
+        mcc: 5815,
+        url: 'https://fruntt.com',
+      },
+      tos_acceptance: {
+        date: timestamp,
+        ip: ip,
+      },
+    };
+
+    const personParams = {
+      address: {
+        line1: req.body.address,
+        city: req.body.city,
+        state: req.body.state.value,
+        country: req.body.country.value,
+        postal_code: req.body.zip,
+      },
+      email: user.email,
+      dob: {
+        day: req.body.day,
+        month: req.body.month,
+        year: req.body.year,
+      },
+      first_name: req.body.first,
+      last_name: req.body.last,
+      phone: req.body.phone,
+      ssn_last_4: req.body.ssn,
+      relationship: {
+        representative: true,
+        owner: true,
+        title: 'Seller',
+      },
+    };
+
+    if (type === 'business') {
+      accountParams.company = {
+        address: {
+          line1: req.body.busAddress,
+          city: req.body.busCity,
+          state: req.body.busState.value,
+          postal_code: req.body.busZip,
+          country: req.body.busCountry.value,
+        },
+        name: req.body.busName,
+        phone: req.body.busPhone,
+        tax_id: req.body.busEIN,
+        owners_provided: true,
+      };
+
+      const person = await stripe.accounts.createPerson(
+        account.id,
+        personParams
+      );
+    } else if (type === 'individual') {
+      accountParams.individual = {
+        address: {
+          line1: req.body.address,
+          city: req.body.city,
+          state: req.body.state.value,
+          country: req.body.country.value,
+          postal_code: req.body.zip,
+        },
+        email: user.email,
+        dob: {
+          day: req.body.day,
+          month: req.body.month,
+          year: req.body.year,
+        },
+        first_name: req.body.first,
+        last_name: req.body.last,
+        phone: req.body.phone,
+        ssn_last_4: req.body.ssn,
+      };
+    }
+
+    // //creates stripe custom account based on account params
+    const updateAccount = await stripe.accounts.update(
+      account.id,
+      accountParams
+    );
+
+    //creates token for adding an external account
+    const token = await stripe.tokens.create({
+      bank_account: {
+        country:
+          type === 'individual'
+            ? req.body.country.value
+            : req.body.busCountry.value,
+        currency: currency,
+        account_holder_name: req.body.accountName,
+        account_holder_type: type === 'individual' ? 'individual' : 'company',
+        routing_number: req.body.routing,
+        account_number: req.body.account,
+      },
+    });
+
+    const bank = await stripe.accounts.createExternalAccount(account.id, {
+      external_account: token.id,
+    });
+
+    const afterAcc = await stripe.accounts.retrieve(account.id);
+
+    console.log(afterAcc);
+
+    user.stripeId = account.id;
+    user.bankId = bank.id;
+    user.bankAdded = true;
+    await user.save();
+    return res.json('Bank added');
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -710,4 +881,5 @@ module.exports = {
   twitterLogin,
   twitterRegister,
   changePassword,
+  addBankAccount,
 };

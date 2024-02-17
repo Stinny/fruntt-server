@@ -22,6 +22,7 @@ const handleStripeEvents = async (req, res) => {
   switch (event?.type) {
     case 'account.updated':
       const account = event?.data?.object;
+
       try {
         if (account.charges_enabled) {
           const user = await User.findOne({ stripeId: account.id });

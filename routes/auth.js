@@ -41,4 +41,6 @@ router.post('/password/change', isTokenValid, setUser, auth.changePassword);
 router.get('/twitter/:type', auth.twitterAuth);
 router.post('/twitter/login', auth.twitterLogin);
 router.post('/twitter/register', auth.twitterRegister);
+router.post('/add/bank', isTokenValid, setUser, auth.addBankAccount);
+
 module.exports = router;

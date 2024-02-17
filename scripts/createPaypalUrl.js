@@ -4,6 +4,7 @@ const clientId =
   'AYfOOQkEruKyvyKHExLyryvMQRDcyHWqEfZAcaqI14Y9N9Y92jcsBVUY4-EZQwstTyP7zsOIq7JMHAae';
 const clientSecret =
   'EEFM5qVDYbtcXrWEtDUlU1ICpsWpVf7Tm-Wzjz75bsU4_FCeEXbDwNY6CdU0ETnB7YUwDfpSaCrpwrhz';
+
 const paypalOAuthUrl = 'https://api-m.sandbox.paypal.com/v1/oauth2/token';
 
 const auth = {
@@ -31,21 +32,37 @@ const createToken = () => {
     });
 };
 
-const createReferal = async () => {
+const createUrl = async () => {
   const paypalApiUrl =
     'https://api-m.sandbox.paypal.com/v2/customer/partner-referrals';
 
   const requestBody = {
-    operations: [{ operation: 'API_INTEGRATION' }],
+    operations: [
+      {
+        operation: 'API_INTEGRATION',
+        api_integration_preference: {
+          rest_api_integration: {
+            integration_method: 'PAYPAL',
+            integration_type: 'THIRD_PARTY',
+            third_party_details: {
+              features: ['PAYMENT', 'REFUND'],
+            },
+          },
+        },
+      },
+    ],
     legal_consents: [{ type: 'SHARE_DATA_CONSENT', granted: true }],
     products: ['EXPRESS_CHECKOUT'],
+    web_experience_preference: {
+      return_url: 'https://fruntt.com/settings',
+    },
   };
 
   axios
     .post(paypalApiUrl, requestBody, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer {VALID TOKEN GOES HERE}`,
+        Authorization: `Bearer {VAlID TOKEN GOES HERE}`,
       },
     })
     .then((response) => {
@@ -56,4 +73,4 @@ const createReferal = async () => {
     });
 };
 
-createReferal();
+createUrl();
