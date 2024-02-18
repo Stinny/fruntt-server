@@ -12,6 +12,7 @@ const Product = require('../models/Product');
 const Oauth = require('oauth');
 const Twitter = require('twitter');
 const countryToCurrency = require('country-to-currency');
+const Message = require('../models/Message');
 
 //for twitter oauth
 const oauth = new Oauth.OAuth(
@@ -859,6 +860,23 @@ const addBankAccount = async (req, res) => {
   }
 };
 
+const createMessage = async (req, res) => {
+  const { name, email, body } = req.body;
+  try {
+    const message = new Message({
+      email: email,
+      name: name,
+      message: body,
+    });
+
+    await message.save();
+
+    return res.json('Submitted');
+  } catch (err) {
+    return res.status(500).json('Server error');
+  }
+};
+
 module.exports = {
   login,
   register,
@@ -882,4 +900,5 @@ module.exports = {
   twitterRegister,
   changePassword,
   addBankAccount,
+  createMessage,
 };

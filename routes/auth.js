@@ -6,6 +6,7 @@ const setUser = require('../middleware/setUser');
 router.post('/login', auth.login);
 router.post('/register', auth.register);
 router.get('/updateduser', isTokenValid, setUser, auth.updatedUser);
+router.post('/submit/message', auth.createMessage);
 router.get('/refresh/:refreshTkn', auth.getNewAccessToken);
 router.get('/onboard', isTokenValid, setUser, auth.getOnboardUrl);
 router.get('/getsetupintent', isTokenValid, setUser, auth.getSetupIntent);
