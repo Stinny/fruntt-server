@@ -9,6 +9,7 @@ router.get('/updateduser', isTokenValid, setUser, auth.updatedUser);
 router.post('/submit/message', auth.createMessage);
 router.get('/refresh/:refreshTkn', auth.getNewAccessToken);
 router.get('/onboard', isTokenValid, setUser, auth.getOnboardUrl);
+router.get('/bank/url', isTokenValid, setUser, auth.getBankUrl);
 router.get('/getsetupintent', isTokenValid, setUser, auth.getSetupIntent);
 router.post('/disconnectstripe', isTokenValid, setUser, auth.disconnectStripe);
 router.post(
@@ -42,6 +43,5 @@ router.post('/password/change', isTokenValid, setUser, auth.changePassword);
 router.get('/twitter/:type', auth.twitterAuth);
 router.post('/twitter/login', auth.twitterLogin);
 router.post('/twitter/register', auth.twitterRegister);
-router.post('/add/bank', isTokenValid, setUser, auth.addBankAccount);
 
 module.exports = router;

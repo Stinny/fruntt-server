@@ -216,6 +216,44 @@ const getOnboardUrl = async (req, res) => {
   }
 };
 
+const getBankUrl = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    //creates stripe account
+    const stripeAcc = await stripe.accounts.create({
+      type: 'custom',
+      capabilities: {
+        card_payments: {
+          requested: true,
+        },
+        transfers: {
+          requested: true,
+        },
+      },
+    });
+
+    user.stripeId = stripeAcc.id;
+
+    const bankUrl = await stripe.accountLinks.create({
+      account: stripeAcc.id,
+      refresh_url: 'https://fruntt.com/settings',
+      return_url: 'https://fruntt.com/settings',
+      type: 'account_onboarding',
+      collection_options: {
+        fields: 'eventually_due',
+      },
+    });
+
+    await user.save();
+
+    return res.json(bankUrl);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json(err);
+  }
+};
+
 const disconnectStripe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -738,123 +776,135 @@ const addBankAccount = async (req, res) => {
       },
     });
 
-    const accountParams = {
-      business_type: type === 'individual' ? 'individual' : busType,
-      settings: {
-        payouts: {
-          schedule: { interval: 'weekly', weekly_anchor: 'friday' },
-        },
-      },
-      business_profile: {
-        mcc: 5815,
-        url: 'https://fruntt.com',
-      },
-      tos_acceptance: {
-        date: timestamp,
-        ip: ip,
-      },
-    };
-
-    const personParams = {
-      address: {
-        line1: req.body.address,
-        city: req.body.city,
-        state: req.body.state.value,
-        country: req.body.country.value,
-        postal_code: req.body.zip,
-      },
-      email: user.email,
-      dob: {
-        day: req.body.day,
-        month: req.body.month,
-        year: req.body.year,
-      },
-      first_name: req.body.first,
-      last_name: req.body.last,
-      phone: req.body.phone,
-      ssn_last_4: req.body.ssn,
-      relationship: {
-        representative: true,
-        owner: true,
-        title: 'Seller',
-      },
-    };
-
-    if (type === 'business') {
-      accountParams.company = {
-        address: {
-          line1: req.body.busAddress,
-          city: req.body.busCity,
-          state: req.body.busState.value,
-          postal_code: req.body.busZip,
-          country: req.body.busCountry.value,
-        },
-        name: req.body.busName,
-        phone: req.body.busPhone,
-        tax_id: req.body.busEIN,
-        owners_provided: true,
-      };
-
-      const person = await stripe.accounts.createPerson(
-        account.id,
-        personParams
-      );
-    } else if (type === 'individual') {
-      accountParams.individual = {
-        address: {
-          line1: req.body.address,
-          city: req.body.city,
-          state: req.body.state.value,
-          country: req.body.country.value,
-          postal_code: req.body.zip,
-        },
-        email: user.email,
-        dob: {
-          day: req.body.day,
-          month: req.body.month,
-          year: req.body.year,
-        },
-        first_name: req.body.first,
-        last_name: req.body.last,
-        phone: req.body.phone,
-        ssn_last_4: req.body.ssn,
-      };
-    }
-
-    // //creates stripe custom account based on account params
-    const updateAccount = await stripe.accounts.update(
-      account.id,
-      accountParams
-    );
-
-    //creates token for adding an external account
-    const token = await stripe.tokens.create({
-      bank_account: {
-        country:
-          type === 'individual'
-            ? req.body.country.value
-            : req.body.busCountry.value,
-        currency: currency,
-        account_holder_name: req.body.accountName,
-        account_holder_type: type === 'individual' ? 'individual' : 'company',
-        routing_number: req.body.routing,
-        account_number: req.body.account,
+    const accountLink = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: 'https://example.com/reauth',
+      return_url: 'https://example.com/return',
+      type: 'account_onboarding',
+      collection_options: {
+        fields: 'eventually_due',
       },
     });
 
-    const bank = await stripe.accounts.createExternalAccount(account.id, {
-      external_account: token.id,
-    });
+    console.log(accountLink);
 
-    const afterAcc = await stripe.accounts.retrieve(account.id);
+    // const accountParams = {
+    //   business_type: type === 'individual' ? 'individual' : busType,
+    //   settings: {
+    //     payouts: {
+    //       schedule: { interval: 'weekly', weekly_anchor: 'friday' },
+    //     },
+    //   },
+    //   business_profile: {
+    //     mcc: 5815,
+    //     url: 'https://fruntt.com',
+    //   },
+    //   tos_acceptance: {
+    //     date: timestamp,
+    //     ip: ip,
+    //   },
+    // };
 
-    console.log(afterAcc);
+    // const personParams = {
+    //   address: {
+    //     line1: req.body.address,
+    //     city: req.body.city,
+    //     state: req.body.state.value,
+    //     country: req.body.country.value,
+    //     postal_code: req.body.zip,
+    //   },
+    //   email: user.email,
+    //   dob: {
+    //     day: req.body.day,
+    //     month: req.body.month,
+    //     year: req.body.year,
+    //   },
+    //   first_name: req.body.first,
+    //   last_name: req.body.last,
+    //   phone: req.body.phone,
+    //   ssn_last_4: req.body.ssn,
+    //   relationship: {
+    //     representative: true,
+    //     owner: true,
+    //     title: 'Seller',
+    //   },
+    // };
 
-    user.stripeId = account.id;
-    user.bankId = bank.id;
-    user.bankAdded = true;
-    await user.save();
-    return res.json('Bank added');
+    // if (type === 'business') {
+    //   accountParams.company = {
+    //     address: {
+    //       line1: req.body.busAddress,
+    //       city: req.body.busCity,
+    //       state: req.body.busState.value,
+    //       postal_code: req.body.busZip,
+    //       country: req.body.busCountry.value,
+    //     },
+    //     name: req.body.busName,
+    //     phone: req.body.busPhone,
+    //     tax_id: req.body.busEIN,
+    //     owners_provided: true,
+    //   };
+
+    //   const person = await stripe.accounts.createPerson(
+    //     account.id,
+    //     personParams
+    //   );
+    // } else if (type === 'individual') {
+    //   accountParams.individual = {
+    //     address: {
+    //       line1: req.body.address,
+    //       city: req.body.city,
+    //       state: req.body.state.value,
+    //       country: req.body.country.value,
+    //       postal_code: req.body.zip,
+    //     },
+    //     email: user.email,
+    //     dob: {
+    //       day: req.body.day,
+    //       month: req.body.month,
+    //       year: req.body.year,
+    //     },
+    //     first_name: req.body.first,
+    //     last_name: req.body.last,
+    //     phone: req.body.phone,
+    //     ssn_last_4: req.body.ssn,
+    //   };
+    // }
+
+    // // //creates stripe custom account based on account params
+    // const updateAccount = await stripe.accounts.update(
+    //   account.id,
+    //   accountParams
+    // );
+
+    // //creates token for adding an external account
+    // const token = await stripe.tokens.create({
+    //   bank_account: {
+    //     country:
+    //       type === 'individual'
+    //         ? req.body.country.value
+    //         : req.body.busCountry.value,
+    //     currency: currency,
+    //     account_holder_name: req.body.accountName,
+    //     account_holder_type: type === 'individual' ? 'individual' : 'company',
+    //     routing_number: req.body.routing,
+    //     account_number: req.body.account,
+    //   },
+    // });
+
+    // const bank = await stripe.accounts.createExternalAccount(account.id, {
+    //   external_account: token.id,
+    // });
+
+    // const afterAcc = await stripe.accounts.retrieve(account.id);
+
+    // console.log(afterAcc);
+
+    // user.stripeId = account.id;
+    // user.bankId = bank.id;
+    // user.bankAdded = true;
+    // await user.save();
+    // return res.json('Bank added');
   } catch (err) {
     console.log(err);
   }
@@ -901,4 +951,5 @@ module.exports = {
   changePassword,
   addBankAccount,
   createMessage,
+  getBankUrl,
 };
