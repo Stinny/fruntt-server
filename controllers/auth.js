@@ -190,14 +190,14 @@ const getOnboardUrl = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    if (!user.stripeId) {
-      //creates stripe account
-      const stripeAcc = await stripe.accounts.create({
-        type: 'standard',
-        business_type: 'individual',
-      });
-      user.stripeId = stripeAcc.id;
-    }
+    //creates stripe account
+    const stripeAcc = await stripe.accounts.create({
+      type: 'standard',
+      business_type: 'individual',
+    });
+
+    user.stripeId = stripeAcc.id;
+    user.stripePending = true;
 
     const savedUser = await user.save();
 
@@ -234,11 +234,12 @@ const getBankUrl = async (req, res) => {
     });
 
     user.stripeId = stripeAcc.id;
+    user.bankPending = true;
 
     const bankUrl = await stripe.accountLinks.create({
       account: stripeAcc.id,
-      refresh_url: 'https://fruntt.com/settings',
-      return_url: 'https://fruntt.com/settings',
+      refresh_url: 'http://localhost:3000/settings',
+      return_url: 'http://localhost:3000/settings',
       type: 'account_onboarding',
       collection_options: {
         fields: 'eventually_due',
@@ -248,6 +249,26 @@ const getBankUrl = async (req, res) => {
     await user.save();
 
     return res.json(bankUrl);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json(err);
+  }
+};
+
+const getUpdateUrl = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    const updateUrl = await stripe.accountLinks.create({
+      account: user.stripeId,
+      refresh_url: 'http://localhost:3000/settings',
+      return_url: 'http://localhost:3000/settings',
+      type: 'account_update',
+    });
+
+    await user.save();
+
+    return res.json(updateUrl);
   } catch (err) {
     console.log(err);
     return res.status(500).json(err);
@@ -952,4 +973,5 @@ module.exports = {
   addBankAccount,
   createMessage,
   getBankUrl,
+  getUpdateUrl,
 };

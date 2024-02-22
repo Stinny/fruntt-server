@@ -20,21 +20,34 @@ const handleStripeEvents = async (req, res) => {
   }
 
   switch (event?.type) {
+    //adds stripe account and bank/stripe status
     case 'account.updated':
       const account = event?.data?.object;
 
       try {
-        if (account.charges_enabled) {
-          const user = await User.findOne({ stripeId: account.id });
-
-          user.stripeOnboard = true;
-          await user.save();
+        const user = await User.findOne({ stripeId: account.id });
+        if (account.type === 'custom') {
+          if (account.payouts_enabled) {
+            user.bankAdded = true;
+            user.bankPending = false;
+            await user.save();
+          } else if (!account.payouts_enabled) {
+            user.bankAdded = false;
+            user.bankPending = true;
+          }
+        } else if (account.type === 'standard') {
+          if (account.charges_enabled) {
+            user.stripeOnboard = true;
+            user.stripePending = false;
+            await user.save();
+          }
         }
         break;
       } catch (err) {
         console.log(err.message);
         break;
       }
+    //marks order as paid
     case 'payment_intent.succeeded':
       const paymentIntent = event?.data?.object;
       try {
@@ -42,6 +55,21 @@ const handleStripeEvents = async (req, res) => {
         order.paid = true;
 
         await order.save();
+        break;
+      } catch (err) {
+        console.log(err.message);
+        break;
+      }
+    //adds bank account Id to User doc
+    case 'account.external_account.created':
+      const extAccount = event?.data?.object;
+
+      try {
+        const user = await User.findOne({ stripeId: extAccount.account });
+
+        user.bankId = extAccount.id;
+
+        await user.save();
         break;
       } catch (err) {
         console.log(err.message);

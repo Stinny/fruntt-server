@@ -10,6 +10,7 @@ router.post('/submit/message', auth.createMessage);
 router.get('/refresh/:refreshTkn', auth.getNewAccessToken);
 router.get('/onboard', isTokenValid, setUser, auth.getOnboardUrl);
 router.get('/bank/url', isTokenValid, setUser, auth.getBankUrl);
+router.get('/update/url', isTokenValid, setUser, auth.getUpdateUrl);
 router.get('/getsetupintent', isTokenValid, setUser, auth.getSetupIntent);
 router.post('/disconnectstripe', isTokenValid, setUser, auth.disconnectStripe);
 router.post(
