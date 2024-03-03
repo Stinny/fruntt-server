@@ -30,6 +30,7 @@ const handleStripeEvents = async (req, res) => {
           if (account.payouts_enabled) {
             user.bankAdded = true;
             user.bankPending = false;
+
             await user.save();
           } else if (!account.payouts_enabled) {
             user.bankAdded = false;
@@ -40,6 +41,9 @@ const handleStripeEvents = async (req, res) => {
             user.stripeOnboard = true;
             user.stripePending = false;
             await user.save();
+          } else if (!account.charges_enabled) {
+            user.stripeOnboard = false;
+            user.stripePending = true;
           }
         }
         break;

@@ -20,6 +20,7 @@ const UserSchema = new mongoose.Schema(
     stripePending: { type: Boolean, default: false },
     bankId: { type: String, default: '' },
     bankAdded: { type: Boolean, default: false },
+    bankDeleted: { type: Boolean, default: false },
     bankPending: { type: Boolean, default: false },
     subscribed: { type: Boolean, default: false },
     unlimited: { type: Boolean, default: false },

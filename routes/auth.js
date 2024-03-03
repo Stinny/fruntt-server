@@ -13,6 +13,7 @@ router.get('/bank/url', isTokenValid, setUser, auth.getBankUrl);
 router.get('/update/url', isTokenValid, setUser, auth.getUpdateUrl);
 router.get('/getsetupintent', isTokenValid, setUser, auth.getSetupIntent);
 router.post('/disconnectstripe', isTokenValid, setUser, auth.disconnectStripe);
+router.post('/bank/remove', isTokenValid, setUser, auth.removeBank);
 router.post(
   '/updateaccountinfo',
   isTokenValid,

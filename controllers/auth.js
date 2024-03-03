@@ -163,7 +163,26 @@ const updatedUser = async (req, res) => {
       storeIds.push({ id: stores[i]._id, url: stores[i].url });
     }
 
-    return res.json({ ...otherInfo, store: storeFront, storeIds: storeIds });
+    let balance = false;
+    if (user.stripeId) {
+      const stripeBalance = await stripe.balance.retrieve({
+        stripeAccount: user?.stripeId,
+      });
+
+      if (
+        stripeBalance.available[0].amount > 0 ||
+        stripeBalance.pending[0].amount > 0
+      ) {
+        balance = true;
+      }
+    }
+
+    return res.json({
+      ...otherInfo,
+      store: storeFront,
+      storeIds: storeIds,
+      balance: balance,
+    });
   } catch (err) {
     return res.status(500).send('Server error');
   }
@@ -190,14 +209,15 @@ const getOnboardUrl = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
-    //creates stripe account
-    const stripeAcc = await stripe.accounts.create({
-      type: 'standard',
-      business_type: 'individual',
-    });
+    if (!user.stripeId) {
+      //creates stripe account
+      const stripeAcc = await stripe.accounts.create({
+        type: 'standard',
+      });
 
-    user.stripeId = stripeAcc.id;
-    user.stripePending = true;
+      user.stripeId = stripeAcc.id;
+      user.stripePending = true;
+    }
 
     const savedUser = await user.save();
 
@@ -232,9 +252,10 @@ const getBankUrl = async (req, res) => {
         },
       },
     });
-
     user.stripeId = stripeAcc.id;
     user.bankPending = true;
+
+    await user.save();
 
     const bankUrl = await stripe.accountLinks.create({
       account: stripeAcc.id,
@@ -246,8 +267,6 @@ const getBankUrl = async (req, res) => {
       },
     });
 
-    await user.save();
-
     return res.json(bankUrl);
   } catch (err) {
     console.log(err);
@@ -258,13 +277,16 @@ const getBankUrl = async (req, res) => {
 const getUpdateUrl = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    const stripeAcc = await stripe.accounts.retrieve(user.stripeId);
 
-    const updateUrl = await stripe.accountLinks.create({
+    const updateParams = {
       account: user.stripeId,
       refresh_url: 'http://localhost:3000/settings',
       return_url: 'http://localhost:3000/settings',
       type: 'account_update',
-    });
+    };
+
+    const updateUrl = await stripe.accountLinks.create(updateParams);
 
     await user.save();
 
@@ -275,11 +297,36 @@ const getUpdateUrl = async (req, res) => {
   }
 };
 
+const removeBank = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    const deleteStripe = await stripe.accounts.del(user.stripeId);
+
+    if (deleteStripe.deleted) {
+      user.bankId = '';
+      user.bankAdded = false;
+      user.bankPending = false;
+      user.stripeId = '';
+
+      await user.save();
+
+      return res.json('Bank deleted');
+    } else {
+      return res.json('Bank not deleted');
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 const disconnectStripe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
 
     user.stripeOnboard = false;
+    user.stripePending = false;
     user.stripeId = '';
 
     await user.save();
@@ -749,188 +796,6 @@ const twitterRegister = async (req, res) => {
   }
 };
 
-const addBankAccount = async (req, res) => {
-  let type = req.body.type;
-  let ip = req.ip || req.ips;
-  let date = new Date();
-  let timestamp = Math.floor(date.getTime() / 1000);
-
-  let currency =
-    type === 'individual'
-      ? countryToCurrency[req.body.country.value]
-      : countryToCurrency[req.body.busCountry.value];
-
-  switch (req.body.busType) {
-    case 'non_profit':
-      busType = 'non_profit';
-      break;
-    case 'company':
-      busType = 'company';
-      break;
-    default:
-      busType = '';
-  }
-
-  try {
-    //   //get bank account details
-    //   //create custom account
-    //   //create bank token
-    //   //create bank account(external account) with account id and token id
-    //   //add account ID and bank ID to user doc
-    const user = await User.findById(req.user.id);
-
-    //create initial stripe account
-    const account = await stripe.accounts.create({
-      type: 'custom',
-      country:
-        type === 'individual'
-          ? req.body.country.value
-          : req.body.busCountry.value,
-      email: user.email,
-      capabilities: {
-        card_payments: {
-          requested: true,
-        },
-        transfers: {
-          requested: true,
-        },
-      },
-    });
-
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: 'https://example.com/reauth',
-      return_url: 'https://example.com/return',
-      type: 'account_onboarding',
-      collection_options: {
-        fields: 'eventually_due',
-      },
-    });
-
-    console.log(accountLink);
-
-    // const accountParams = {
-    //   business_type: type === 'individual' ? 'individual' : busType,
-    //   settings: {
-    //     payouts: {
-    //       schedule: { interval: 'weekly', weekly_anchor: 'friday' },
-    //     },
-    //   },
-    //   business_profile: {
-    //     mcc: 5815,
-    //     url: 'https://fruntt.com',
-    //   },
-    //   tos_acceptance: {
-    //     date: timestamp,
-    //     ip: ip,
-    //   },
-    // };
-
-    // const personParams = {
-    //   address: {
-    //     line1: req.body.address,
-    //     city: req.body.city,
-    //     state: req.body.state.value,
-    //     country: req.body.country.value,
-    //     postal_code: req.body.zip,
-    //   },
-    //   email: user.email,
-    //   dob: {
-    //     day: req.body.day,
-    //     month: req.body.month,
-    //     year: req.body.year,
-    //   },
-    //   first_name: req.body.first,
-    //   last_name: req.body.last,
-    //   phone: req.body.phone,
-    //   ssn_last_4: req.body.ssn,
-    //   relationship: {
-    //     representative: true,
-    //     owner: true,
-    //     title: 'Seller',
-    //   },
-    // };
-
-    // if (type === 'business') {
-    //   accountParams.company = {
-    //     address: {
-    //       line1: req.body.busAddress,
-    //       city: req.body.busCity,
-    //       state: req.body.busState.value,
-    //       postal_code: req.body.busZip,
-    //       country: req.body.busCountry.value,
-    //     },
-    //     name: req.body.busName,
-    //     phone: req.body.busPhone,
-    //     tax_id: req.body.busEIN,
-    //     owners_provided: true,
-    //   };
-
-    //   const person = await stripe.accounts.createPerson(
-    //     account.id,
-    //     personParams
-    //   );
-    // } else if (type === 'individual') {
-    //   accountParams.individual = {
-    //     address: {
-    //       line1: req.body.address,
-    //       city: req.body.city,
-    //       state: req.body.state.value,
-    //       country: req.body.country.value,
-    //       postal_code: req.body.zip,
-    //     },
-    //     email: user.email,
-    //     dob: {
-    //       day: req.body.day,
-    //       month: req.body.month,
-    //       year: req.body.year,
-    //     },
-    //     first_name: req.body.first,
-    //     last_name: req.body.last,
-    //     phone: req.body.phone,
-    //     ssn_last_4: req.body.ssn,
-    //   };
-    // }
-
-    // // //creates stripe custom account based on account params
-    // const updateAccount = await stripe.accounts.update(
-    //   account.id,
-    //   accountParams
-    // );
-
-    // //creates token for adding an external account
-    // const token = await stripe.tokens.create({
-    //   bank_account: {
-    //     country:
-    //       type === 'individual'
-    //         ? req.body.country.value
-    //         : req.body.busCountry.value,
-    //     currency: currency,
-    //     account_holder_name: req.body.accountName,
-    //     account_holder_type: type === 'individual' ? 'individual' : 'company',
-    //     routing_number: req.body.routing,
-    //     account_number: req.body.account,
-    //   },
-    // });
-
-    // const bank = await stripe.accounts.createExternalAccount(account.id, {
-    //   external_account: token.id,
-    // });
-
-    // const afterAcc = await stripe.accounts.retrieve(account.id);
-
-    // console.log(afterAcc);
-
-    // user.stripeId = account.id;
-    // user.bankId = bank.id;
-    // user.bankAdded = true;
-    // await user.save();
-    // return res.json('Bank added');
-  } catch (err) {
-    console.log(err);
-  }
-};
-
 const createMessage = async (req, res) => {
   const { name, email, body } = req.body;
   try {
@@ -970,8 +835,8 @@ module.exports = {
   twitterLogin,
   twitterRegister,
   changePassword,
-  addBankAccount,
   createMessage,
   getBankUrl,
   getUpdateUrl,
+  removeBank,
 };
