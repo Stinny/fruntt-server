@@ -66,6 +66,21 @@ const getStoreProducts = async (req, res) => {
   }
 };
 
+const getProductByUrl = async (req, res) => {
+  const url = req.params.productUrl;
+
+  try {
+    const product = await Product.find({ url: url });
+
+    const { content, files, ...filteredProduct } = product[0]._doc;
+
+    return res.json(filteredProduct);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 //gets a single product
 const getProduct = async (req, res) => {
   const productId = req.params.productId;
@@ -479,6 +494,7 @@ const getFeaturedProducts = async (req, res) => {
 module.exports = {
   getAll,
   getStoreProducts,
+  getProductByUrl,
   getMarketProducts,
   getFeaturedProducts,
   getProduct,

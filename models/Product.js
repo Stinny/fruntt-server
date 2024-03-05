@@ -27,7 +27,7 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    url: { type: String },
+    url: { type: String, unique: true },
     callToAction: { type: String },
     payChoice: { type: Boolean, default: false },
     suggestedPrice: { type: String },

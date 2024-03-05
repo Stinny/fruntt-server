@@ -87,9 +87,9 @@ const create = async (req, res) => {
       newOrder.clientId = paymentIntent.client_secret;
     }
 
-    await newOrder.save();
+    const order = await newOrder.save();
 
-    res.json({ orderId: newOrder._id });
+    res.json(order);
   } catch (err) {
     console.log(err);
     res.status(500).json(err.message);
