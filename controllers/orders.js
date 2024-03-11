@@ -63,7 +63,7 @@ const create = async (req, res) => {
     const feeAmount = Math.round(total * feePercentage * 100);
 
     const newOrder = new Order({
-      storeId: storeId,
+      storeId: storeFront._id,
       item: itemWithContent,
       options: options,
       total: total,
@@ -149,12 +149,21 @@ const update = async (req, res) => {
     orderToUpdate.name = name;
     orderToUpdate.placedOn = new Date();
     orderToUpdate.fulfilled = true;
+    orderToUpdate.paid = true;
     product.numberOfSales += 1;
-
-    if (orderToUpdate.total == 0) orderToUpdate.paid = true;
 
     if (customer) {
       customer.numberOfOrders += 1;
+
+      if (orderToUpdate.total > 0) {
+        const paymentIntent = await stripe.paymentIntents.update(
+          orderToUpdate.paymentId,
+          {
+            customer: customer.customerId,
+          }
+        );
+      }
+
       await customer.save();
     } else {
       const newCustomer = new Customer({
@@ -165,22 +174,13 @@ const update = async (req, res) => {
         storeId: storefront?._id,
       });
       newCustomer.numberOfOrders += 1;
+      const stripeCustomer = await stripe.customers.create({
+        name: name,
+        email: email,
+        description: `Fruntt - customer`,
+      });
+      newCustomer.customerId = stripeCustomer.id;
       await newCustomer.save();
-    }
-
-    const stripeCustomer = await stripe.customers.create({
-      name: name,
-      email: email,
-      description: `Fruntt - customer of ${storefront?.url}`,
-    });
-
-    if (orderToUpdate.total > 0) {
-      const paymentIntent = await stripe.paymentIntents.update(
-        orderToUpdate.paymentId,
-        {
-          customer: stripeCustomer.id,
-        }
-      );
     }
 
     await sendDigitalConfirmEmail({
@@ -204,8 +204,8 @@ const update = async (req, res) => {
 
     await storefrontOwner.save();
     await product.save();
-
     const savedOrder = await orderToUpdate.save();
+
     return res.json({ msg: 'Order updated', order: savedOrder });
   } catch (err) {
     console.log(err);

@@ -98,6 +98,54 @@ const getStorefrontById = async (req, res) => {
   }
 };
 
+const getStorefrontByUrl = async (req, res) => {
+  const storeUrl = req.params.storeUrl;
+
+  try {
+    const storefront = await Storefront.find({ name: storeUrl });
+    const storeOwner = await User.findById(storefront[0].userId);
+    const products = await Product.find({ userId: storeOwner._id });
+
+    // const stores = await Storefront.find({ userId: storeOwner._id });
+    // const orders = await Order.find({ storeId: storefront });
+
+    let successfulOrders = [];
+    let storeIds = [];
+
+    const orders = await Order.find({ storeId: storefront[0]._id });
+
+    for (var x = 0; x < orders.length; x++) {
+      if (orders[x].paid) {
+        successfulOrders.push(orders[x]);
+      }
+    }
+
+    return res.json({
+      storefront: storefront,
+      stripeOnboard: storeOwner.stripeOnboard,
+      bankAdded: storeOwner.bankAdded,
+      products: products,
+      sellerProfile: {
+        name: storeOwner.name,
+        bio: storeOwner.sellerProfile.bio,
+        instagram: storeOwner.sellerProfile.instagram,
+        facebook: storeOwner.sellerProfile.facebook,
+        youtube: storeOwner.sellerProfile.youtube,
+        twitter: storeOwner.sellerProfile.twitter,
+        linkedin: storeOwner.sellerProfile.linkedin,
+        tikok: storeOwner.sellerProfile.tiktok,
+        link: storeOwner.sellerProfile.link,
+        profilePic: storeOwner.sellerProfile.picture.url,
+        numberOfSales: successfulOrders.length,
+      },
+      storeIds: storeIds,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
 const changeName = async (req, res) => {
   const storeId = req.params.storeId;
 
@@ -606,4 +654,5 @@ module.exports = {
   deleteStore,
   deleteLogo,
   addStorefront,
+  getStorefrontByUrl,
 };

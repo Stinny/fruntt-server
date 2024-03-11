@@ -68,13 +68,27 @@ const getStoreProducts = async (req, res) => {
 
 const getProductByUrl = async (req, res) => {
   const url = req.params.productUrl;
+  let totalRating = 0;
+  let reviews = [];
 
   try {
     const product = await Product.find({ url: url });
 
+    const reviewsData = await Review.find({
+      productId: product[0]._id,
+    });
+
+    for (var r = 0; r < reviewsData.length; r++) {
+      reviews.push(reviewsData[r]);
+      totalRating += reviewsData[r]?.rating;
+    }
+
     const { content, files, ...filteredProduct } = product[0]._doc;
 
-    return res.json(filteredProduct);
+    return res.json({
+      product: filteredProduct,
+      rating: totalRating / reviews.length,
+    });
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');

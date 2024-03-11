@@ -8,6 +8,7 @@ const customerSchema = new mongoose.Schema(
     zipcode: { type: String },
     numberOfOrders: { type: Number, default: 0 },
     storeId: { type: String },
+    customerId: { type: String },
   },
   { timestamps: true }
 );
