@@ -22,7 +22,14 @@ router.post('/edit/:storeId', isTokenValid, setUser, storefront.editStyles);
 
 router.post('/delete', isTokenValid, setUser, storefront.deleteStore);
 
-router.post('/addlogo/:storeId', isTokenValid, setUser, storefront.changeName);
+router.post(
+  '/update/:storeId',
+  isTokenValid,
+  setUser,
+  storefront.updateSettings
+);
+
+router.post('/checkname', isTokenValid, setUser, storefront.checkPageName);
 
 router.post('/deletelogo', isTokenValid, setUser, storefront.deleteLogo);
 

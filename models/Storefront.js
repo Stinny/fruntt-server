@@ -13,8 +13,8 @@ const StorefrontSchema = new mongoose.Schema(
     stripeOnboard: { type: Boolean, default: false },
     productAdded: { type: Boolean, default: false },
     designAdded: { type: Boolean, default: false },
-    hideDescription: { type: Boolean, default: false },
-    hideQuestions: { type: Boolean, default: false },
+    allowFiltering: { type: Boolean, default: false },
+    showSales: { type: Boolean, default: false },
     hideReviews: { type: Boolean, default: false },
     featured: { type: Boolean, default: false },
     style: {

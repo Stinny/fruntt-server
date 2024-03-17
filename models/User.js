@@ -7,7 +7,6 @@ const UserSchema = new mongoose.Schema(
     name: { type: String, default: '' },
     country: {},
     currency: {},
-
     zipcode: { type: String },
     password: { type: String },
     storeId: { type: String },
@@ -26,7 +25,7 @@ const UserSchema = new mongoose.Schema(
     unlimited: { type: Boolean, default: false },
     sendUpdates: { type: Boolean, default: true },
     sendOrderPlaced: { type: Boolean, default: true },
-    sendItemOutOfStock: { type: Boolean, default: true },
+    sendNewCustomer: { type: Boolean, default: true },
     sendReviewCollected: { type: Boolean, default: true },
     emailConfirmed: { type: Boolean, default: false },
     paymentAdded: { type: Boolean, default: false },
@@ -47,6 +46,7 @@ const UserSchema = new mongoose.Schema(
       tiktok: { type: String, default: '' },
       linkedin: { type: String, default: '' },
       link: { type: String, default: '' },
+      medium: { type: String, default: '' },
       picture: {
         url: { type: String },
         key: { type: String },

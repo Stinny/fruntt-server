@@ -18,6 +18,7 @@ const ProductSchema = new mongoose.Schema(
     featured: { type: Boolean, default: false },
     storeId: { type: String },
     storeUrl: { type: String },
+    pageName: { type: String },
     numberOfSales: { type: Number, default: 0 },
     info: {
       type: String,

@@ -338,18 +338,15 @@ const disconnectStripe = async (req, res) => {
 
 const updateAccountInfo = async (req, res) => {
   try {
-    const { email, country, zipcode } = req.body;
-
-    console.log(req.body);
+    const { email, country } = req.body;
 
     const userToUpdate = await User.findById(req.user.id);
 
     userToUpdate.email = email;
     userToUpdate.country = country;
-    userToUpdate.zipcode = zipcode;
 
     await userToUpdate.save();
-    return res.json('User updated');
+    return res.json({ msg: 'User updated', updatedUser: userToUpdate });
   } catch (err) {
     return res.status(500).json('Server error');
   }
@@ -359,13 +356,11 @@ const updateSellerProfile = async (req, res) => {
   const {
     name,
     bio,
-    facebook,
     youtube,
     twitter,
     instagram,
-    tiktok,
-    linkedin,
     link,
+    medium,
     profilePicUrl,
     profilePicKey,
   } = req.body;
@@ -374,13 +369,11 @@ const updateSellerProfile = async (req, res) => {
     const user = await User.findById(req.user.id);
 
     user.sellerProfile.bio = bio;
-    user.sellerProfile.facebook = facebook;
     user.sellerProfile.instagram = instagram;
     user.sellerProfile.youtube = youtube;
     user.sellerProfile.twitter = twitter;
-    user.sellerProfile.tiktok = tiktok;
-    user.sellerProfile.linkedin = linkedin;
     user.sellerProfile.link = link;
+    user.sellerProfile.medium = medium;
     user.sellerProfile.picture.url = profilePicUrl;
     user.sellerProfile.picture.key = profilePicKey;
     user.name = name;
@@ -403,14 +396,14 @@ const updateNotifications = async (req, res) => {
   try {
     const {
       sendUpdates,
-      sendItemOutOfStock,
+      sendNewCustomer,
       sendOrderPlaced,
       sendReviewCollected,
     } = req.body;
 
     const userToUpdate = await User.findById(req.user.id);
     userToUpdate.sendUpdates = sendUpdates;
-    userToUpdate.sendItemOutOfStock = sendItemOutOfStock;
+    userToUpdate.sendNewCustomer = sendNewCustomer;
     userToUpdate.sendOrderPlaced = sendOrderPlaced;
     userToUpdate.sendReviewCollected = sendReviewCollected;
 

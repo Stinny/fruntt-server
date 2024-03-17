@@ -146,35 +146,52 @@ const getStorefrontByUrl = async (req, res) => {
   }
 };
 
-const changeName = async (req, res) => {
+const updateSettings = async (req, res) => {
   const storeId = req.params.storeId;
+
+  const { pageName, filtering, sales } = req.body;
 
   try {
     const storefrontToEdit = await Storefront.findById(storeId);
-    const storesWithSameName = await Storefront.find({ name: req.body.name });
 
-    if (storesWithSameName.length) return res.json({ msg: 'Name in use' });
-
-    storefrontToEdit.name = req.body.name;
-    storefrontToEdit.url = `https://${req.body.name}.fruntt.com`;
+    storefrontToEdit.name = pageName;
+    storefrontToEdit.allowFiltering = filtering;
+    storefrontToEdit.showSales = sales;
 
     await Product.updateMany(
       { storeId: storefrontToEdit._id },
-      { storeUrl: `https://${req.body.name}.fruntt.com` }
+      { pageName: pageName }
     );
 
-    await updateSiteName({
-      siteId: storefrontToEdit?.siteId,
-      storeName: req.body.name,
-    });
+    // await updateSiteName({
+    //   siteId: storefrontToEdit?.siteId,
+    //   storeName: req.body.name,
+    // });
 
-    await updateEnv({
-      siteId: storefrontToEdit?.siteId,
-      storeName: req.body.name,
-    });
+    // await updateEnv({
+    //   siteId: storefrontToEdit?.siteId,
+    //   storeName: req.body.name,
+    // });
 
     await storefrontToEdit.save();
-    return res.json({ msg: 'Name changed' });
+    return res.json('Page updated');
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json('Server error');
+  }
+};
+
+const checkPageName = async (req, res) => {
+  const { pageName } = req.body;
+
+  try {
+    const storefront = await Storefront.find({ name: pageName });
+
+    if (storefront.length) {
+      return res.json('Name taken');
+    }
+
+    return res.json('Name available');
   } catch (err) {
     console.log(err);
     return res.status(500).json('Server error');
@@ -648,11 +665,12 @@ module.exports = {
   getFeaturedStores,
   getStorefrontById,
   editStyles,
-  changeName,
+  updateSettings,
   addVisit,
   getStoreStats,
   deleteStore,
   deleteLogo,
   addStorefront,
   getStorefrontByUrl,
+  checkPageName,
 };
